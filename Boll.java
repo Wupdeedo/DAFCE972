@@ -1,30 +1,18 @@
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.Arc2D;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.Path2D;
-import java.awt.geom.Point2D;
-
+import java.awt.geom.*;
 import javax.swing.*;
+import java.util.*;
+
+import com.toedter.calendar.*;// This is a borrowed third party lib
 
 
 public class Boll extends JPanel implements MouseListener, ComponentListener{
 	
-	private double w;
-	private double h;
+	private double w,h;
 	private Point2D center;
-	private GeneralPath fp;
-	private GeneralPath hp;
-	private GeneralPath bp;
-	private GeneralPath ip;
-	private GeneralPath ep;
-	private GeneralPath pb;
-	private GeneralPath p1;
-	private GeneralPath p2;
-	private GeneralPath p3;
-	private GeneralPath p4;
-	private JPanel fl;
+	private GeneralPath fp,hp,bp,ip,ep,pb,p1,p2,p3,p4;
+	private FlyPanel fl;
 	private JPanel ho;
 	private JPanel bi;
 	private JPanel in;
@@ -56,11 +44,9 @@ public class Boll extends JPanel implements MouseListener, ComponentListener{
 		this.addMouseListener(this);
 		this.addComponentListener(this);
 		
-		fl = new JPanel();
-		fl.setOpaque(false);
-		fl.add(new JLabel("Flyg"));
-		fl.add(new JLabel("Från: "));
 		
+		
+		fl = new FlyPanel();
 		
 		
 		ho = new JPanel();
@@ -91,6 +77,7 @@ public class Boll extends JPanel implements MouseListener, ComponentListener{
 	
 	public void paint(Graphics graph){
 		Graphics2D g = (Graphics2D) graph;
+		state();
 		g.setColor(Color.cyan);
 		g.fill(fp);
 		g.setColor(Color.magenta);
@@ -105,43 +92,19 @@ public class Boll extends JPanel implements MouseListener, ComponentListener{
 	}
 	private void state(){
 		switch(state){
-			case 5: ep = pb;
-					fp = p1;
-					hp = p2;
-					bp = p3;
-					ip = p4;
-					break;
-			case 4: ip = pb;
-					fp = p1;
-					hp = p2;
-					bp = p3;
-					ep = p4;
-					break;
-			case 3: bp = pb;
-					fp = p1;
-					hp = p2;
-					ip = p3;
-					ep = p4;
-					break;
-			case 2: hp = pb;
-					fp = p1;
-					bp = p2;
-					ip = p3;
-					ep = p4;
-					break;
+			case 5: ep = pb;fp = p1;hp = p2;bp = p3;ip = p4;break;
+			case 4: ip = pb;fp = p1;hp = p2;bp = p3;ep = p4;break;
+			case 3: bp = pb;fp = p1;hp = p2;ip = p3;ep = p4;break;
+			case 2: hp = pb;fp = p1;bp = p2;ip = p3;ep = p4;break;
 			case 1: 
-			default:fp = pb;
-					hp = p1;
-					bp = p2;
-					ip = p3;
-					ep = p4;
+			default:fp = pb;hp = p1;bp = p2;ip = p3;ep = p4;
 		}
 	}
 	
 	private void setup(){
 		w = this.getWidth();
 		h = this.getHeight();
-		center = new Point2D.Double(w/2-42,h/2);
+		center = new Point2D.Double(w/2.5,h/2);
 		Arc2D a = new Arc2D.Double(0,0,w,h,120,30,Arc2D.OPEN);
 		p1 = new GeneralPath();
 		p1.moveTo(center.getX(), center.getY());
@@ -193,10 +156,94 @@ public class Boll extends JPanel implements MouseListener, ComponentListener{
 	public void componentResized(ComponentEvent arg0) {
 		setup();
 		state();
+		invalidate();
 		repaint();
 	}
 	public void componentShown(ComponentEvent arg0) {}
 	public void componentHidden(ComponentEvent arg0) {}
 	public void componentMoved(ComponentEvent arg0) {}
 
+}
+
+class FlyPanel extends JPanel{
+	
+	public JLabel fromLab, toLab, fromDat, toDat;
+	public JTextField fromTex, toTex;
+	JDateChooser dat1,dat2;// Borrowed from third party lib
+	
+	public FlyPanel(){
+		GroupLayout layout = new GroupLayout(this);
+		this.setOpaque(false);
+		this.setLayout(layout);
+		
+		Dimension dim = new Dimension(150,20);
+		
+		fromLab = new JLabel("Från: ");
+		toLab = new JLabel("Till:   ");
+		fromDat = new JLabel("Avresedatum:   ");
+		toDat = new JLabel("Hemkomstdatum: ");
+		
+		fromTex = new JTextField();
+		fromTex.setMaximumSize(dim);
+		toTex = new JTextField();
+		toTex.setMaximumSize(dim);
+		
+		dat1 = new JDateChooser();
+		dat1.setLocale(new Locale("se","se"));
+		dat1.setDateFormatString("yyyy.MM.dd");
+		dat1.setMaximumSize(dim);
+		
+		dat2 = new JDateChooser();
+		dat2.setLocale(new Locale("se","se"));
+		dat2.setDateFormatString("yyyy.MM.dd");
+		dat2.setMaximumSize(dim);
+		
+		
+		layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+				.addGroup(layout.createSequentialGroup()
+						.addContainerGap(150,150)
+						.addComponent(fromLab)
+						.addComponent(fromTex)
+				)
+				.addGroup(layout.createSequentialGroup()
+						.addContainerGap(150,150)
+						.addComponent(toLab)
+						.addComponent(toTex)
+				)
+				.addGroup(layout.createSequentialGroup()
+						.addContainerGap(200,200)
+						.addComponent(fromDat)
+						.addComponent(dat1)
+				)
+				.addGroup(layout.createSequentialGroup()
+						.addContainerGap(200,200)
+						.addComponent(toDat)
+						.addComponent(dat2)
+				)
+		);
+		
+		layout.setVerticalGroup(layout.createSequentialGroup()
+				.addContainerGap(75,75)
+				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+					.addComponent(fromLab)
+					.addComponent(fromTex)
+				)
+				.addGap(10)
+				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+					.addComponent(toLab)
+					.addComponent(toTex)
+				)
+				.addGap(10)
+				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+					.addComponent(fromDat)
+					.addComponent(dat1)
+				)
+				.addGap(10)
+				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+					.addComponent(toDat)
+					.addComponent(dat2)
+				)
+		);
+	}
+	
 }
