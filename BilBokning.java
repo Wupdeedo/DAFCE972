@@ -59,6 +59,15 @@ public class BilBokning implements Bokning{
 		return this.pris;
 	}
 	
-	//TODO toString()
+	@Override
+	public String toString(){
+		return "bilID: " + this.bilID + "\nhämtdatum: " + this.hamtdatum + "\nlämningsdatum: " + this.lamningsdatum + 
+				"\nhämtort: " + this.hamtort + "\nlämningsort: " + this.lamningsort + "\nPris: " + this.pris;
+	}
+
+	@Override
+	public Bokningstyp getType() {
+		return Bokningstyp.HYRBIL;
+	}
 
 }
