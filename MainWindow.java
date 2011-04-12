@@ -120,7 +120,7 @@ public class MainWindow extends JFrame{
 		
 		BufferedImage img;
 		try {
-			img = ImageIO.read(new File("t3.jpg")); //TODO input picture of the tree
+			img = ImageIO.read(new File("/Users/niklas/Pictures/firefly.jpg")); //TODO input picture of the tree
 			for(String s : this.panelMap.keySet()){
 				ret.put(s, new TreePanel(this, img, this.panelMap.get(s).keySet().toArray(new String[0])));
 			}
@@ -202,6 +202,7 @@ public class MainWindow extends JFrame{
 			JPanel p = new JPanel();
 			p.setLayout(new BoxLayout(p, BoxLayout.PAGE_AXIS));
 			// TODO add search-circles
+			p.add(new Boll());
 			for(Entry<String, JPanel> e : this.panelMap.get(s).entrySet()){
 				p.add(e.getValue());
 			}

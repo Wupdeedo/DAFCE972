@@ -34,7 +34,8 @@ public class TreePanel extends ImagePanel implements ActionListener{
 	private static int buttonDoneValue = 1;
 	
 	private JPanel leftPanel = new JPanel();
-	private ImagePanel centerPanel = new ImagePanel(loadImage("t3.jpg"));
+	//private ImagePanel centerPanel = new ImagePanel(loadImage("firefly.jpg"));
+	private JPanel centerPanel = new JPanel();
 	private JPanel rightPanel = new JPanel();
 	private MainWindow parent;
 	
@@ -78,7 +79,7 @@ public class TreePanel extends ImagePanel implements ActionListener{
 	private void addPanels(){
 		Box box = Box.createHorizontalBox();
 		box.add(leftPanel);
-		centerPanel.setPreferredSize(new Dimension(centerPanel.getImage().getWidth(), centerPanel.getImage().getHeight()));
+		//centerPanel.setPreferredSize(new Dimension(centerPanel.getImage().getWidth(), centerPanel.getImage().getHeight()));
 		centerPanel.setBorder(BorderFactory.createLineBorder(Color.blue));
 		box.add(centerPanel);
 		box.add(rightPanel);
