@@ -32,38 +32,48 @@ public class DatabaseHandle {
 	private PreparedStatement getEventSpotsLeft;
 	private PreparedStatement getTotalSpots;
 	private PreparedStatement bookEvent;
+	private PreparedStatement logIn;
 	
 	public DatabaseHandle(){
 		try
         {
-            Class.forName ("com.mysql.jdbc.Driver").newInstance ();
+            Class.forName("org.postgresql.Driver");
             con = DriverManager.getConnection (LoginData.URL, LoginData.USER, LoginData.PASSWORD);
             vbc = con.prepareStatement("SELECT Vaccination.VaccBeskrivning FROM Vaccination NATURAL INNER JOIN VacciLand NATURAL INNER JOIN Landsinfo WHERE Landsinfo.Land = ?");
-            fa = con.prepareStatement("SELECT Avgangsdatum, MIN(Stolskostnad) AS Pris FROM Flight NATURAL INNER JOIN Ort WHERE Avgangsort = ? AND Ankomstort = ? AND Avgangsdatum BETWEEN ? AND ? GROUP BY Avgangsdatum");
-            sf = con.prepareStatement("SELECT FlightID, Avgangstid, Ankomsttid, Stolskostnad FROM Flight NATURAL INNER JOIN Flygplan NATURAL INNER JOIN Flygplanstyp WHERE Avgangsdatum = ? AND Avgangsort = ? AND Ankomstort = ? AND Platser > (SELECT COUNT(*) FROM Flygplansbokning WHERE Flygplansbokning.FlightID = Flight.FlightID)");
-            gac = con.prepareStatement("SELECT Typ, COUNT(*) AS Tillg FROM Stol NATURAL INNER JOIN Flight WHERE FlightID = ? AND NOT EXISTS (SELECT FlightID, Nummer FROM Flygplansbokning WHERE Flight.FlightID = Flygplansbokning.FlightID AND Stol.Nummer = Flygplansbokning.Nummer) GROUP BY Typ");
-            gan = con.prepareStatement("SELECT Nummer FROM Stol NATURAL INNER JOIN Flight WHERE FlightID = ? AND Typ = ? AND NOT EXISTS (SELECT * FROM Flygplansbokning WHERE Flygplansbokning.Nummer = Stol.Nummer)");
+            fa = con.prepareStatement("SELECT Avgangsdatum, MIN(Kostnad) AS Pris FROM Flight NATURAL INNER JOIN Stol NATURAL INNER JOIN Ort WHERE Avgangsort = ? AND Ankomstort = ? AND Avgangsdatum BETWEEN ? AND ? GROUP BY Avgangsdatum");
+            sf = con.prepareStatement("SELECT FlightID, Avgangstid, Ankomsttid, MIN(Kostnad) AS MinKostnad FROM Flight NATURAL INNER JOIN Flygplan NATURAL INNER JOIN Flygplanstyp WHERE Avgangsdatum = ? AND Avgangsort = ? AND Ankomstort = ? AND Platser > (SELECT COUNT(*) FROM Flightbokning WHERE Flightbokning.FlightID = Flight.FlightID) GROUP BY FlightID");
+            gac = con.prepareStatement("SELECT Typ, COUNT(*) AS Tillg FROM Stol NATURAL INNER JOIN Flight WHERE FlightID = ? AND NOT EXISTS (SELECT FlightID, Nummer FROM Flightbokning WHERE Flight.FlightID = Flightbokning.FlightID AND Stol.Nummer = Flightbokning.Nummer) GROUP BY Typ");
+            gan = con.prepareStatement("SELECT Nummer FROM Stol NATURAL INNER JOIN Flight WHERE FlightID = ? AND Typ = ? AND NOT EXISTS (SELECT * FROM Flightbokning WHERE Flightbokning.Nummer = Stol.Nummer)");
             createBooking = con.prepareStatement("INSERT INTO TABLE Bokning VALUES (?)");
             getBookingID = con.prepareStatement("SELECT MAX(BokningsID) AS Max FROM Bokning WHERE KontoID = ?");
-            bookFlightChair = con.prepareStatement("INSERT INTO TABLE Flygplansbokning VALUES (?, ?, ?)");
-            createAccount = con.prepareStatement("INSERT INTO Konto VALUES (?, UNHEX(SHA2(?, 256)), ?, ?, ?, ?, ?, ?, ?, ?)");
+            bookFlightChair = con.prepareStatement("INSERT INTO TABLE Flightbokning VALUES (?, ?, ?)");
+            createAccount = con.prepareStatement("INSERT INTO Konto VALUES (?, decode(md5(?), 'hex'), ?, ?, ?, ?, ?, ?, ?, ?)");
             getAccountID = con.prepareStatement("SELECT KontoID FROM Konto WHERE Login = ?");
-            getAvailableCars = con.prepareStatement("SELECT BilID, Modell, Tillverkare, Drift, Vaxel, DepotID FROM Bil NATURAL INNER JOIN Bilmodell WHERE NOT EXISTS (SELECT * FROM Bilschema WHERE Bilschema.BilID = Bil.BilID AND (? > Hamtdatum AND ? < Lamningsdatum) AND (? > Hamtdatum AND ? < Lamningsdatum)) AND ? = (SELECT Lamningsplats FROM Bilschema WHERE Lamningsdatum = (SELECT MAX(Lamningsdatum) FROM Bilschema AS a WHERE a.BilID = Bilschema.BilID))");
+            getAvailableCars = con.prepareStatement("SELECT BilID, Modell, Tillverkare, Drift, Vaxel, DepotID FROM Bil NATURAL INNER JOIN Bilmodell WHERE NOT EXISTS (SELECT * FROM Bilschema WHERE Bilschema.BilID = Bil.BilID AND (? > Hamtdatum AND ? < Lamningsdatum) AND (? > Hamtdatum AND ? < Lamningsdatum)) AND (SELECT OrtID FROM Ort WHERE Ort = ?) = (SELECT Lamningsplats FROM Bilschema WHERE Lamningsdatum = (SELECT MAX(Lamningsdatum) FROM Bilschema AS a WHERE a.BilID = Bilschema.BilID))");
             bookCar = con.prepareStatement("INSERT INTO Bilschema VALUES (?, ?, ?, ?, ?, ?)");
             getDepots = con.prepareStatement("SELECT DepotID FROm Depot NATURAL INNER JOIN Ort WHERE Ort = ?");
-            getAvailableHotels = con.prepareStatement("SELECT HotellID, Namn, Ort, Stjarnor, Beskrivning FROM Hotell NATURAL INNER JOIN Ort WHERE Ort = ? AND EXISTS (SELECT RumsID FROM Rum WHERE Rum.HotellID = Hotell.HotellID MINUS SELECT RumsID FROM Rumsschema WHERE (? > Frandatum AND ? < Tilldatum) AND (? > Frandatum AND ? < Tilldatum))");
-            getRooms = con.prepareStatement("SELECT RumsID FROM Rum WHERE HotellID = ? MINUS SELECT RumsID FROM Rumsschema WHERE (? > Frandatum AND ? < Tilldatum) AND (? > Frandatum AND ? < Tilldatum)");
+            getAvailableHotels = con.prepareStatement("SELECT HotellID, Namn, Ort, Stjarnor, Beskrivning, MIN(Kostnad) FROM Hotell NATURAL INNER JOIN Rum NATURAL INNER JOIN Ort WHERE Ort = ? AND EXISTS (SELECT RumsID FROM Rum WHERE Rum.HotellID = Hotell.HotellID MINUS SELECT RumsID FROM Rumsschema WHERE (? > Frandatum AND ? < Tilldatum) AND (? > Frandatum AND ? < Tilldatum))");
+            getRooms = con.prepareStatement("SELECT RumsID FROM Rum WHERE HotellID = ? EXCEPT SELECT RumsID FROM Rumsschema WHERE (? > Frandatum AND ? < Tilldatum) AND (? > Frandatum AND ? < Tilldatum)");
             bookRoom = con.prepareStatement("INSERT INTO Rumsschema VALUES (?,?,?,?)");
-            getEventsByLocation = con.prepareStatement("SELECT EvenemangsID, Namn, Startdatum, Slutdatum, Starttid, Sluttid, Beskrivning, PlatsNamn FROM Evenemang NATURAL INNER JOIN Platser NATURAL INNER JOIN Ort WHERE Ort = ? AND Startdatum BETWEEN ? AND ? AND AntalPlatser > (SELECT SUM(Antal) FROM Evenemangschema WHERE Evenemang.EvenemangsID=Evenemangsschema.EvenemangsID)");
+            getEventsByLocation = con.prepareStatement("SELECT EvenemangsID, Namn, Startdatum, Slutdatum, Starttid, Sluttid, Beskrivning, PlatsNamn, Kostnad FROM Evenemang NATURAL INNER JOIN Platser NATURAL INNER JOIN Ort WHERE Ort = ? AND Startdatum BETWEEN ? AND ? AND AntalPlatser > (SELECT SUM(Antal) FROM Evenemangschema WHERE Evenemang.EvenemangsID=Evenemangsschema.EvenemangsID)");
             getEventSpotsLeft = con.prepareStatement("SELECT SUM(Antal) AS Sum FROM Evenemangschema WHERE EvenemangsID = ?");
             getTotalSpots = con.prepareStatement("Select Antalplatser FROM Evenemang WHERE EvenemangsID = ?");
             bookEvent = con.prepareStatement("INSERT INTO Evenemangsschema VALUES (?, ?, ?)");
+            logIn = con.prepareStatement("SELECT KontoID, BokningsID FROM Konto NATURAL INNER JOIN Bokning WHERE Login=? AND Password=decode(md5(?), 'hex');");
             
         }
         catch (Exception e)
         {
             e.printStackTrace();
         }
+	}
+	
+	public long logIn(String user, String pass){
+		logIn.setString(1, user);
+		logIn.setString(1, pass);
+		ResultSet rs = logIn.executeQuery();
+		if(!rs.next()) return null;
+		else return rs.previous();
 	}
 	
 	public void bookEvent(int evenemangsID, long bokningsID, int antal) throws SQLException{
@@ -219,9 +229,9 @@ public class DatabaseHandle {
 		fa.setString(1, avgang);
 		fa.setString(2, ankomst);
 		
-		//5 days before and after
-		fa.setDate(3, new java.sql.Date(date.getTime()-432000000));
-		fa.setDate(4, new java.sql.Date(date.getTime()+432000000));
+		//17 days before and after
+		fa.setDate(3, new java.sql.Date(date.getTime()-1468800000));
+		fa.setDate(4, new java.sql.Date(date.getTime()+1468800000));
 		ResultSet rs = fa.executeQuery();
 		LinkedList<DatePrice> list = new LinkedList<DatePrice>();
 		while(rs.next()){
@@ -241,3 +251,4 @@ public class DatabaseHandle {
 	
 
 }
+
