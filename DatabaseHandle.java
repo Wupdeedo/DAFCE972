@@ -77,12 +77,13 @@ public class DatabaseHandle {
         }
 	}
 	
-	public long logIn(String user, String pass){
+	public ResultSet logIn(String user, String pass) throws SQLException{
 		logIn.setString(1, user);
 		logIn.setString(1, pass);
 		ResultSet rs = logIn.executeQuery();
 		if(!rs.next()) return null;
-		else return rs.previous();
+		rs.previous();
+		return rs;
 	}
 	
 	public void bookEvent(int evenemangsID, long bokningsID, int antal) throws SQLException{
