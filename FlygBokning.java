@@ -100,4 +100,9 @@ public class FlygBokning implements Bokning{
 	public String getKlass() {
 		return klass;
 	}
+
+	@Override
+	public String getOrt() {
+		return this.ankomstOrt;
+	}
 }

@@ -39,7 +39,7 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 	private JPanel leftExtraPanel = new JPanel();
 	private JPanel rightExtraPanel = new JPanel();
 	private JPanel adPanel = new JPanel();
-	private JPanel searchPanel = new JPanel(); // TODO private
+	private JPanel searchPanel = new JPanel();
 	private JPanel rightUsedPanel = new JPanel();
 	private JPanel loginPanel = new JPanel();
 	private JPanel treePanel = new JPanel();
@@ -106,48 +106,51 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 //							ankomstTid.toString(), flightID);
 //				}
 //			} catch (SQLException e) {
-//				// TODO Auto-generated catch block
 //				e.printStackTrace();
 //			}
 			// TODO create a map through reading from the database, ResultSet -> Map
 			FlygResultatPanel fr = new FlygResultatPanel(this, flightMap);
 			m.put("Svar", new BorderPanel(this, "Svar", fr, fr)); // TODO create the option panels
-//			List<Integer> l = new LinkedList<Integer>(); // TODO
-//			l.add(1);
-//			l.add(5);
-//			l.add(2);
-//			l.add(7);
-//			l.add(15);
+			List<Integer> l = new LinkedList<Integer>(); // TODO
+			l.add(1);
+			l.add(5);
+			l.add(2);
+			l.add(7);
+			l.add(15);
 			// TODO create a list of available seats, taken from the database
+			//FlygAlternativPanel fa = new FlygAlternativPanel(this, 156, 2, l);
 			FlygAlternativPanel fa = new FlygAlternativPanel(this);
 			m.put("FlygAlternativ",  new BorderPanel(this, "FlygAlternativ", fa, fa));
 			// ------------------------------------------
 			// TODO take info from the database
-			JLabel l = new JLabel("<html>Line One<br>Line Two</br></html>");
-			m.put("Info", new BorderPanel(this,"Info", l, "BakÃ¥t", "FramÃ¥t"));
-			// TODO take info from this.flygBokning
-			m.put("Bekrï¿½ftelse", new BorderPanel(this, "Bekrï¿½ftelse", new JLabel("SHHHHPOOOOOOFFF")));
+			//JLabel label = new JLabel("<html>Line One<br>Line Two</br></html>");
+			m.put("Info", new BorderPanel(this,"Info", new InfoTreePanel(), "BakÃ¥t", "FramÃ¥t"));
+			BekraftelsePanel bp = new BekraftelsePanel(this);
+			m.put("Bekräftelse", new BorderPanel(this, "Bekräftelse", bp, bp));
 			return m;
 		}else if(outerPanel.equals(hotell)){
 			// TODO HotellResultatPanel br = new HotellResultatPanel(this, );
 			m.put("Svar", new JPanel());
 			m.put("HotellAlternativ", new JPanel());
-			m.put("Info", new JPanel());
-			m.put("Bekrï¿½ftelse", new JPanel());
+			m.put("Info", new InfoTreePanel());
+			BekraftelsePanel bp = new BekraftelsePanel(this);
+			m.put("Bekrï¿½ftelse", new BorderPanel(this, "Bekrï¿½ftelse", bp, bp));;
 			return m;
 		}else if(outerPanel.equals(hyrbil)){
 			// TODO BilResultatPanel br = new BilResultatPanel(this, );
 			m.put("Svar", new JPanel());
 			m.put("BilAlternativ", new JPanel());
-			m.put("Info", new JPanel());
-			m.put("Bekrï¿½ftelse", new JPanel());
+			m.put("Info", new InfoTreePanel());
+			BekraftelsePanel bp = new BekraftelsePanel(this);
+			m.put("Bekrï¿½ftelse", new BorderPanel(this, "Bekrï¿½ftelse", bp, bp));
 			return m;
 		}else if(outerPanel.equals(evenemang)){
 			// TODO EventResultatPanel br = new EventResultatPanel(this, );
 			m.put("Svar", new JPanel());
 			m.put("EvenemangsAlternativ", new JPanel());
-			m.put("Info", new JPanel());
-			m.put("Bekrï¿½ftelse", new JPanel());
+			m.put("Info", new InfoTreePanel());
+			BekraftelsePanel bp = new BekraftelsePanel(this);
+			m.put("Bekrï¿½ftelse", new BorderPanel(this, "Bekrï¿½ftelse", bp, bp));
 			return m;
 		}
 		return null;
@@ -200,7 +203,7 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 		treePanel.setLayout(new CardLayout());
 		int n = 0;
 		for(TreePanel tp : this.optionTrees.values()){
-			System.out.println(searchOptions.get(n));
+			//System.out.println(searchOptions.get(n));
 			treePanel.add(tp, searchOptions.get(n));
 			n++;
 		}
@@ -355,6 +358,38 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 		}
 		return null;
 	}
+
+	public BorderPanel createInfoPanel(){
+//		try {
+//			// TODO
+//			String s = dbh.getCountry(this.getCurrentBokning().getOrt());
+//			InfoTreePanel ip = new InfoTreePanel(s);
+//			return(new BorderPanel(this, "Info", ip));
+//		} catch (SQLException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+		return null;
+	}
+	
+	public BorderPanel createBekraftelse(){
+		BekraftelsePanel bp = new BekraftelsePanel(this, this.getCurrentBokning().toString());
+		return new BorderPanel(this, "Bekräftelse", bp, bp);
+	}
+	
+	public Bokning getCurrentBokning(){
+		if(this.currentPanel.equals(flyg)){
+			return this.flygBokning;
+		}else if(this.currentPanel.equals(hotell)){
+			return this.hotellBokning;
+		}else if(this.currentPanel.equals(hyrbil)){
+			return this.bilBokning;
+		}else if(this.currentPanel.equals(evenemang)){
+			return this.eventBokning;
+		}else{
+			return null;
+		}
+	}
 	
 	// Shows the correct view (flyg, hyrbil, hotell,...)
 	public void showSearchOption(String searchOption){
@@ -398,9 +433,6 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 		}
 	}
 	
-	public void createBokningAndTree(String bokning, boolean almanacka, boolean filter){
-	}
-	
 	public void flightSearch(String avgangsOrt, String ankomstOrt, Date avgangsDatum,
 			Date ankomstDatum, boolean almanacka, boolean filter){
 		if(!almanacka && !filter){
@@ -434,7 +466,7 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 	}
 	
 	public void infoSearch(String land){
-		// TODO träd
+		// TODO don't do shit
 	}
 
 	@Override
@@ -471,8 +503,8 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 			//this.adPanel.setPreferredSize(new Dimension(this.adPanel.getWidth(), this.bannerPanel.getHeight()+this.searchPanel.getHeight()));
 			this.adPanel.setPreferredSize(new Dimension(this.adPanel.getWidth(), this.mainPanel.getHeight()-this.bannerPanel.getHeight()));
 			this.adPanel.setMinimumSize(new Dimension(this.adPanel.getWidth(), this.mainPanel.getHeight()-this.bannerPanel.getHeight()));
-			System.out.println("main-banner: " + (this.mainPanel.getHeight()-this.bannerPanel.getHeight()) +
-					", search: " + this.searchPanel.getHeight() + ", ad: " + this.adPanel.getHeight());
+//			System.out.println("main-banner: " + (this.mainPanel.getHeight()-this.bannerPanel.getHeight()) +
+//					", search: " + this.searchPanel.getHeight() + ", ad: " + this.adPanel.getHeight());
 			this.adPanel.repaint();
 			leftExtraPanel.setPreferredSize(new Dimension(leftExtraPanel.getWidth(), this.mainPanel.getHeight()));
 			rightExtraPanel.setPreferredSize(new Dimension(rightExtraPanel.getWidth(), this.mainPanel.getHeight()));

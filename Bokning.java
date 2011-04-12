@@ -5,4 +5,5 @@ public interface Bokning {
 	public Bokningstyp getType();
 	// true if the search for objects has been done so that the resultPanel can be drawn
 	public boolean searchIsDone();
+	public String getOrt();
 }

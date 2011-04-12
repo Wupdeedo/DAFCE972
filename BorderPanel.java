@@ -125,7 +125,7 @@ public class BorderPanel extends JPanel implements ActionListener{
 			this.parent.showOptionPanel(title, false);
 			this.parent.getOptionTrees().get(this.parent.getCurrentPanel()).switchButtons(this.title);
 			this.parent.getOptionTrees().get(this.parent.getCurrentPanel()).setButtonDone(this.title, true);
-			this.parent.getOptionTrees().get(this.parent.getCurrentPanel()).showNextPanel(this.title);
+			this.parent.getOptionTrees().get(this.parent.getCurrentPanel()).showNextPanel(this.title, true);
 			if(ap!=null)
 				ap.OkAction(); // TODO
 			/*

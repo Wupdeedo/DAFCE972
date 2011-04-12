@@ -94,4 +94,9 @@ public class BilBokning implements Bokning{
 		return this.searchDone;
 	}
 
+	@Override
+	public String getOrt() {
+		return this.lamningsOrt;
+	}
+
 }
