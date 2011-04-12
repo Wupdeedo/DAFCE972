@@ -225,6 +225,16 @@ public class DatabaseHandle {
 		return res;
 	}
 	
+	public HashMap<Integer, String> getAvailableChairsbyPlace(int flightID) throws SQLException{
+		gac.setInt(1, flightID);
+		ResultSet rs = gac.executeQuery();
+		HashMap<Integer, String> res = new HashMap<Integer, String>();
+		while(rs.next()){
+			res.put(rs.getInt("Tillg"), rs.getString("Typ"));
+		}
+		return res;
+	}
+	
 	public ResultSet searchFlight(Date avgangsdatumRaw, String avgangsort, String ankomstort) throws SQLException{
 		java.sql.Date avgangsdatum = new java.sql.Date(avgangsdatumRaw.getTime());
 		sf.setDate(1, avgangsdatum);

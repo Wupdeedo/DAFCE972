@@ -3,9 +3,16 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.sql.Date;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,7 +31,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
 
-public class MainWindow extends JFrame{
+public class MainWindow extends JFrame implements ActionListener, ComponentListener{
 	private static final long serialVersionUID = 1L;
 	private JPanel mainPanel = new JPanel();
 	private JScrollPane mainScrollPane = new JScrollPane(mainPanel);
@@ -32,7 +39,7 @@ public class MainWindow extends JFrame{
 	private JPanel leftExtraPanel = new JPanel();
 	private JPanel rightExtraPanel = new JPanel();
 	private JPanel adPanel = new JPanel();
-	private JPanel searchPanel = new JPanel();
+	private JPanel searchPanel = new JPanel(); // TODO private
 	private JPanel rightUsedPanel = new JPanel();
 	private JPanel loginPanel = new JPanel();
 	private JPanel treePanel = new JPanel();
@@ -40,16 +47,21 @@ public class MainWindow extends JFrame{
 	HotellBokning hotellBokning = new HotellBokning();
 	BilBokning bilBokning = new BilBokning();
 	EventBokning eventBokning = new EventBokning();
-	LabelTextFieldPanel user = new LabelTextFieldPanel("Användare: ");
-	LabelTextFieldPanel pass = new LabelTextFieldPanel("Lösenord: ", true);
+	LabelTextFieldPanel user = new LabelTextFieldPanel("Anvï¿½ndare: ");
+	LabelTextFieldPanel pass = new LabelTextFieldPanel("Lï¿½senord: ", true);
 	JButton loginButton = new JButton("Logga in");
+	JLabel welcomeLabel = new JLabel();
+	JButton changeBookingButton = new JButton("Ändra bokning");
+	JButton logoutButton = new JButton("Logga ut");
+	DatabaseHandle dbh = new DatabaseHandle(); // TODO create later?
+	private boolean userLoggedIn = false;
 	
 	Map<String, Map<String, JPanel>> panelMap = createPanelMap(false, true);
 	
-	private final static String flyg = "flyg";
-	private final static String hyrbil = "hyrbil";
-	private final static String hotell = "hotell";
-	private final static String evenemang = "evenemang";
+	public final static String flyg = "flyg";
+	public final static String hyrbil = "hyrbil";
+	public final static String hotell = "hotell";
+	public final static String evenemang = "evenemang";
 	
 	private String currentPanel;
 	
@@ -73,8 +85,8 @@ public class MainWindow extends JFrame{
 	}
 	
 	private Map<String, JPanel> createInnerPanelMap(String outerPanel, boolean almanacka, boolean filter){
+		Map<String, JPanel> m = new LinkedHashMap<String, JPanel>();
 		if(outerPanel.equals(flyg)){
-			Map<String, JPanel> m = new LinkedHashMap<String, JPanel>();
 			if(almanacka){
 				// TODO create Prisalmanacka
 			}
@@ -82,32 +94,61 @@ public class MainWindow extends JFrame{
 				FilterPanel fp = new FilterPanel(this);
 				m.put("filter", new BorderPanel(this,"filter",fp,fp));
 			}
-			//----
 			Map<String, Integer> flightMap = new TreeMap<String, Integer>();
-			flightMap.put("10-12", 1);
-			flightMap.put("asdfdsfds", 3);
-			flightMap.put("qweqwrqrwwr", 4);
-			flightMap.put("qwe", 7);
-			//----
+//			try {
+//				ResultSet rs = dbh.searchFlight(this.flygBokning.getAnkomstDatum(), 
+//						this.flygBokning.getAnkomstOrt(), this.flygBokning.getAvgangsOrt());
+//				while(rs.next()){
+//					int flightID = rs.getInt("FlightID");
+//					Date avgangsTid = rs.getDate("Avgangstid");
+//					Date ankomstTid = rs.getDate("Ankomsttid");
+//					flightMap.put("AvgÃ¥ngstid: " + avgangsTid.toString() + " Ankomsttid: " + 
+//							ankomstTid.toString(), flightID);
+//				}
+//			} catch (SQLException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
 			// TODO create a map through reading from the database, ResultSet -> Map
 			FlygResultatPanel fr = new FlygResultatPanel(this, flightMap);
 			m.put("Svar", new BorderPanel(this, "Svar", fr, fr)); // TODO create the option panels
-			List<Integer> l = new LinkedList<Integer>(); // TODO
-			l.add(1);
-			l.add(5);
-			l.add(2);
-			l.add(7);
-			l.add(15);
+//			List<Integer> l = new LinkedList<Integer>(); // TODO
+//			l.add(1);
+//			l.add(5);
+//			l.add(2);
+//			l.add(7);
+//			l.add(15);
 			// TODO create a list of available seats, taken from the database
-			m.put("FlygAlternativ",  new BorderPanel(this, "FlygAlternativ", new FlygAlternativPanel(this, 30,3,l)));
+			FlygAlternativPanel fa = new FlygAlternativPanel(this);
+			m.put("FlygAlternativ",  new BorderPanel(this, "FlygAlternativ", fa, fa));
 			// ------------------------------------------
 			// TODO take info from the database
-			m.put("Info", new BorderPanel(this, "Info", new JLabel("När jag var ett vårtsvinsbarn.")));
+			JLabel l = new JLabel("<html>Line One<br>Line Two</br></html>");
+			m.put("Info", new BorderPanel(this,"Info", l, "BakÃ¥t", "FramÃ¥t"));
 			// TODO take info from this.flygBokning
-			m.put("Bekräftelse", new BorderPanel(this, "Bekräftelse", new JLabel("SHHHHPOOOOOOFFF")));
+			m.put("Bekrï¿½ftelse", new BorderPanel(this, "Bekrï¿½ftelse", new JLabel("SHHHHPOOOOOOFFF")));
 			return m;
 		}else if(outerPanel.equals(hotell)){
-			return null;
+			// TODO HotellResultatPanel br = new HotellResultatPanel(this, );
+			m.put("Svar", new JPanel());
+			m.put("HotellAlternativ", new JPanel());
+			m.put("Info", new JPanel());
+			m.put("Bekrï¿½ftelse", new JPanel());
+			return m;
+		}else if(outerPanel.equals(hyrbil)){
+			// TODO BilResultatPanel br = new BilResultatPanel(this, );
+			m.put("Svar", new JPanel());
+			m.put("BilAlternativ", new JPanel());
+			m.put("Info", new JPanel());
+			m.put("Bekrï¿½ftelse", new JPanel());
+			return m;
+		}else if(outerPanel.equals(evenemang)){
+			// TODO EventResultatPanel br = new EventResultatPanel(this, );
+			m.put("Svar", new JPanel());
+			m.put("EvenemangsAlternativ", new JPanel());
+			m.put("Info", new JPanel());
+			m.put("Bekrï¿½ftelse", new JPanel());
+			return m;
 		}
 		return null;
 	}
@@ -116,55 +157,14 @@ public class MainWindow extends JFrame{
 		Map<String, Map<String, JPanel>> panelMap = new LinkedHashMap<String, Map<String, JPanel>>();
 		
 		Map<String, JPanel> m = new LinkedHashMap<String, JPanel>();
-		// ------------------------------------------
 		if(filter){
 			FilterPanel fp = new FilterPanel(this);
 			m.put("filter", new BorderPanel(this,"filter",fp,fp));
 		}
-		Map<String, Integer> flightMap = new TreeMap<String, Integer>();
-		flightMap.put("10-12", 1);
-		flightMap.put("asdfdsfds", 3);
-		flightMap.put("qweqwrqrwwr", 4);
-		flightMap.put("qwe", 7);
-		// TODO create a map through reading from the database, ResultSet -> Map
-		FlygResultatPanel fr = new FlygResultatPanel(this, flightMap);
-		m.put("Svar", new BorderPanel(this, "Svar", fr, fr)); // TODO create the option panels
-		List<Integer> l = new LinkedList<Integer>(); // TODO
-		l.add(1);
-		l.add(5);
-		l.add(2);
-		l.add(7);
-		l.add(15);
-		// TODO create a list of available
-		m.put("FlygAlternativ",  new BorderPanel(this, "FlygAlternativ", new FlygAlternativPanel(this, 30,3,l)));
-		// ------------------------------------------
-		m.put("Info", new BorderPanel(this, "Info", new JLabel("När jag var ett vårtsvinsbarn.")));
-		m.put("Bekräftelse", new BorderPanel(this, "Bekräftelse", new JLabel("SHHHHPOOOOOOFFF")));
 		panelMap.put(flyg, this.createInnerPanelMap(flyg, almanacka, filter));
-		
-		m = new LinkedHashMap<String, JPanel>();
-		// TODO BilResultatPanel br = new BilResultatPanel(this, );
-		m.put("Svar", new JPanel());
-		m.put("BilAlternativ", new JPanel());
-		m.put("Info", new JPanel());
-		m.put("Bekräftelse", new JPanel());
-		panelMap.put(hyrbil, m);
-		
-		m = new LinkedHashMap<String, JPanel>();
-		// TODO HotellResultatPanel br = new HotellResultatPanel(this, );
-		m.put("Svar", new JPanel());
-		m.put("HotellAlternativ", new JPanel());
-		m.put("Info", new JPanel());
-		m.put("Bekräftelse", new JPanel());
-		panelMap.put(hotell, m);
-		
-		m = new LinkedHashMap<String, JPanel>();
-		// TODO EventResultatPanel br = new EventResultatPanel(this, );
-		m.put("Svar", new JPanel());
-		m.put("EvenemangsAlternativ", new JPanel());
-		m.put("Info", new JPanel());
-		m.put("Bekräftelse", new JPanel());
-		panelMap.put(evenemang, m);
+		panelMap.put(hyrbil, this.createInnerPanelMap(hyrbil, almanacka, filter));
+		panelMap.put(hotell, this.createInnerPanelMap(hotell, almanacka, filter));
+		panelMap.put(evenemang, this.createInnerPanelMap(evenemang, almanacka, filter));
 		
 		return panelMap;
 	}
@@ -190,15 +190,8 @@ public class MainWindow extends JFrame{
 	
 	private Map<String, TreePanel> createOptionTrees(){
 		Map<String, TreePanel> ret = new LinkedHashMap<String, TreePanel>();
-		
-		BufferedImage img;
-		try {
-			img = ImageIO.read(new File("/Users/niklas/Pictures/firefly.jpg")); //TODO input picture of the tree
-			for(String s : this.panelMap.keySet()){
-				ret.put(s, new TreePanel(this, img, this.panelMap.get(s).keySet().toArray(new String[0])));
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
+		for(String s : this.panelMap.keySet()){
+			ret.put(s, new TreePanel(this, null, this.panelMap.get(s).keySet().toArray(new String[0])));
 		}
 		return ret;
 	}
@@ -224,6 +217,12 @@ public class MainWindow extends JFrame{
 		c.gridx = 0;
 		c.gridheight = 64;
 		c.gridwidth = 1; // ?
+		try {
+			leftExtraPanel = new ImagePanel(ImageIO.read(new File("bilder/design4_01.png")));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		leftExtraPanel.setPreferredSize(new Dimension(32*1,768));
 		mainPanel.add(leftExtraPanel,c);
 		
@@ -231,6 +230,12 @@ public class MainWindow extends JFrame{
 		c.gridx = 1; // ?
 		c.gridheight = 6; //?
 		c.gridwidth = 30; // ?
+		try {
+			bannerPanel = new ImagePanel(ImageIO.read(new File("bilder/design4_02.png")));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		bannerPanel.setPreferredSize(new Dimension(32*30,32*6));
 		mainPanel.add(bannerPanel,c);
 		
@@ -238,6 +243,12 @@ public class MainWindow extends JFrame{
 		c.gridx = 1;
 		c.gridheight = 58;
 		c.gridwidth = 6;
+		try {
+			adPanel = new ImagePanel(ImageIO.read(new File("bilder/design4_04.png")));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		adPanel.setPreferredSize(new Dimension(32*6,768-32*6));
 		mainPanel.add(adPanel,c);
 		
@@ -248,6 +259,7 @@ public class MainWindow extends JFrame{
 		//c.fill = GridBagConstraints.BOTH;
 		//TODO add some content to the searchPanel so that it expands correctly
 		//searchPanel.setPreferredSize(new Dimension(32*18,768-32*6));
+		this.searchPanel.addComponentListener(this);
 		mainPanel.add(searchPanel,c);
 		
 		c.gridy = 6;
@@ -255,6 +267,12 @@ public class MainWindow extends JFrame{
 		c.gridheight = 58;
 		c.gridwidth = 6;
 		
+		try {
+			rightUsedPanel = new ImagePanel(ImageIO.read(new File("bilder/design4_06.png")));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		//rightUsedPanel.setLayout(new BoxLayout(this.rightUsedPanel, BoxLayout.PAGE_AXIS));
 		rightUsedPanel.setLayout(new BoxLayout(rightUsedPanel, BoxLayout.PAGE_AXIS));
 		
@@ -266,12 +284,27 @@ public class MainWindow extends JFrame{
 		p.add(this.pass);
 		p.add(Box.createVerticalStrut(10));
 		this.pass.getTextField().setColumns(15);
+		loginButton.addActionListener(this);
 		p.add(this.loginButton);
 		p.add(Box.createVerticalStrut(500));
 		// TODO add actionlistener to the loginbutton to be able to log in.
 		
-		loginPanel.add(p);
-		loginPanel.setVisible(true);		
+		JPanel p2 = new JPanel();
+		p2.setLayout(new BoxLayout(p2, BoxLayout.PAGE_AXIS));
+		this.changeBookingButton.addActionListener(this);
+		this.logoutButton.addActionListener(this);
+
+		p2.add(this.welcomeLabel);
+		p2.add(this.changeBookingButton);
+		p2.add(this.logoutButton);
+		p2.add(Box.createVerticalStrut(500));
+		
+		loginPanel.setLayout(new CardLayout());
+		// TODO add the 'inlogged' version of loginPanel
+		loginPanel.add(p, "loggedout");
+		loginPanel.add(p2, "loggedin");
+		loginPanel.setVisible(true);	
+		
 		rightUsedPanel.add(loginPanel);
 		treePanel.setVisible(true); // TODO false
 		rightUsedPanel.add(treePanel);
@@ -282,6 +315,12 @@ public class MainWindow extends JFrame{
 		c.gridx = 31;
 		c.gridheight = 64;
 		c.gridwidth = 1;
+		try {
+			rightExtraPanel = new ImagePanel(ImageIO.read(new File("bilder/design4_03.png")));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		rightExtraPanel.setPreferredSize(new Dimension(32*1,768));
 		mainPanel.add(rightExtraPanel,c);
 		
@@ -305,18 +344,16 @@ public class MainWindow extends JFrame{
 		}
 	}
 	
-	private BorderPanel createFlygAlternativ(String s){		
-		JPanel p = new JPanel();
-		
-		LabelTextFieldPanel bagage = new LabelTextFieldPanel("Extravikt bagage(kg): ", "0");
-		bagage.getTextField().setColumns(10);
-		LabelTextFieldPanel handBagage = new LabelTextFieldPanel("Extravikt bagage(kg): ", "0");
-		handBagage.getTextField().setColumns(10);
-		
-		p.add(bagage);
-		p.add(handBagage);
-		BorderPanel ret = new BorderPanel(this, "FlygAlternativ" + s, p);
-		return ret;
+	public BorderPanel createFlygAlternativ(){
+		try {
+			Map<Integer, String> m = this.dbh.getAvailableChairsbyPlace(this.flygBokning.getFlightID());
+			FlygAlternativPanel fa = new FlygAlternativPanel(this, 154, 1, m);
+			return(new BorderPanel(this, "FlygAlternativ", fa, fa));
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
 	}
 	
 	// Shows the correct view (flyg, hyrbil, hotell,...)
@@ -344,6 +381,98 @@ public class MainWindow extends JFrame{
 		new MainWindow();
 	}
 	
-	public void resetTree(String name){
+	public void resetTree(String treeName, boolean almanacka, boolean filter){
+		this.panelMap.put(treeName, this.createInnerPanelMap(treeName, almanacka, filter));
+		this.optionTrees.put(treeName, new TreePanel(this, null, this.panelMap.get(treeName).keySet().toArray(new String[0])));
+	}
+	
+	public void setPanel(String treeName, String panelName, JPanel p){
+		for(String s : this.panelMap.keySet()){
+			if(s.equals(treeName)){
+				for(String panel : this.panelMap.get(s).keySet()){
+					if(panel.equals(panelName)){
+						this.panelMap.get(s).put(panel, p);
+					}
+				}
+			}
+		}
+	}
+	
+	public void createBokningAndTree(String bokning, boolean almanacka, boolean filter){
+	}
+	
+	public void flightSearch(String avgangsOrt, String ankomstOrt, Date avgangsDatum,
+			Date ankomstDatum, boolean almanacka, boolean filter){
+		if(!almanacka && !filter){
+			this.flygBokning = new FlygBokning(avgangsOrt, ankomstOrt, avgangsDatum, ankomstDatum);
+			this.panelMap.put(flyg, this.createInnerPanelMap(flyg, almanacka, filter));
+			this.optionTrees.put(flyg, new TreePanel(this, null, this.panelMap.get(flyg).keySet().toArray(new String[0])));
+			this.optionTrees.get(flyg).showPanel("Svar", true);
+		}// TODO
+	}
+	
+	public void carSearch(Date utlamningsDatum, Date inlamningsDatum, String utlamningsOrt,
+			String inlamningsOrt, String kategori){
+		
+	}
+	
+	public void hotelSearch(){
+		
+	}
+	
+	public void eventSearch(){
+		
+	}
+	
+	public void infoSearch(){
+		
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		// TODO Auto-generated method stub
+		if(e.getSource().equals(this.loginButton)){
+			// TODO if(this.dbh.LOGIN!?? this.user.getTextField().getText());
+					//this.welcomeLabel.setText("Welcome " + this.user.getTextField().getText());
+					//((CardLayout)this.loginPanel.getLayout()).next(loginPanel);
+					//this.userLoggedIn = true;
+		}else if(e.getSource().equals(this.changeBookingButton)){
+			// TODO ...
+		}else if(e.getSource().equals(this.logoutButton)){
+			// TODO something.
+			((CardLayout)this.loginPanel.getLayout()).next(loginPanel);
+			this.user.getTextField().setText("");
+			this.pass.getTextField().setText("");
+			this.userLoggedIn = false;
+		}
+	}
+
+	@Override
+	public void componentHidden(ComponentEvent arg0) {
+	}
+
+	@Override
+	public void componentMoved(ComponentEvent arg0) {
+	}
+
+	@Override
+	public void componentResized(ComponentEvent e) {
+		// TODO make it work! + remove error-output
+		if(e.getSource().equals(this.searchPanel)){
+			//this.adPanel.setPreferredSize(new Dimension(this.adPanel.getWidth(), this.bannerPanel.getHeight()+this.searchPanel.getHeight()));
+			this.adPanel.setPreferredSize(new Dimension(this.adPanel.getWidth(), this.mainPanel.getHeight()-this.bannerPanel.getHeight()));
+			this.adPanel.setMinimumSize(new Dimension(this.adPanel.getWidth(), this.mainPanel.getHeight()-this.bannerPanel.getHeight()));
+			System.out.println("main-banner: " + (this.mainPanel.getHeight()-this.bannerPanel.getHeight()) +
+					", search: " + this.searchPanel.getHeight() + ", ad: " + this.adPanel.getHeight());
+			this.adPanel.repaint();
+			leftExtraPanel.setPreferredSize(new Dimension(leftExtraPanel.getWidth(), this.mainPanel.getHeight()));
+			rightExtraPanel.setPreferredSize(new Dimension(rightExtraPanel.getWidth(), this.mainPanel.getHeight()));
+			this.mainScrollPane.getVerticalScrollBar().setValue(this.mainScrollPane.getVerticalScrollBar().getMaximum());
+			// TODO Change here to make the scrollpane work differently when panels are shown/hidden.
+		}
+	}
+
+	@Override
+	public void componentShown(ComponentEvent arg0) {
 	}
 }

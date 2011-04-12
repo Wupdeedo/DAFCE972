@@ -29,7 +29,7 @@ public class TreePanel extends ImagePanel implements ActionListener{
 	// Check this array to determine when the order can be put in the cart.
 	private int[] buttonUses;
 	
-	private static int buttonNotDoneValue = 0; 
+	private static int buttonNotDoneValue = 0;
 	private static int buttonDoneValue = 1;
 	
 	private JPanel leftPanel = new JPanel();
@@ -182,7 +182,7 @@ public class TreePanel extends ImagePanel implements ActionListener{
 		}
 	}
 	
-	// Don't use this method on the last panel(bekräftelse)
+	// Don't use this method on the last panel(bekrï¿½ftelse)
 	public void showNextPanel(String buttonName){
 		for(int n = 0; n < leftButtons.length-1; n++){
 			if(leftButtons[n].getText().equals(buttonName)){
@@ -194,6 +194,15 @@ public class TreePanel extends ImagePanel implements ActionListener{
 				return;
 			}
 		}
+	}
+	
+	public JPanel getNextPanel(String buttonName){
+		for(int n = 0; n < leftButtons.length-1; n++){
+			if(leftButtons[n].getText().equals(buttonName)){
+				return parent.panelMap.get(parent.getCurrentPanel()).get(leftButtons[n+1]);
+			}
+		}
+		return null;
 	}
 	
 }

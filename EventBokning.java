@@ -19,6 +19,11 @@ public class EventBokning implements Bokning{
 	public int pris() {
 		return this.pris;
 	}
+
+	@Override
+	public Bokningstyp getType() {
+		return Bokningstyp.EVENT;
+	}
 	
 	// TODO toString()
 

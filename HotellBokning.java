@@ -39,6 +39,11 @@ public class HotellBokning implements Bokning{
 	public int pris() {
 		return this.pris;
 	}
+
+	@Override
+	public Bokningstyp getType() {
+		return Bokningstyp.HOTELL;
+	}
 	
 	//TODO toString()
 }

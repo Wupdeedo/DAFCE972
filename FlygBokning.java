@@ -7,10 +7,18 @@ public class FlygBokning implements Bokning{
 	private List<Integer> platsNummer;
 	private Date avgangsDatum;
 	private Date ankomstDatum;
+	private String avgangsOrt;
+	private String ankomstOrt;
 	private int pris;
 	
 	public FlygBokning(){
-		
+	}
+	
+	public FlygBokning(String avgangsOrt, String ankomstOrt, Date avgangsDatum, Date ankomstDatum){
+		this.avgangsOrt = avgangsOrt;
+		this.ankomstOrt = ankomstOrt;
+		this.avgangsDatum = avgangsDatum;
+		this.ankomstDatum = ankomstDatum;
 	}
 
 	public void setFlightID(int flightID) {
@@ -30,8 +38,9 @@ public class FlygBokning implements Bokning{
 	}
 	
 	public String toString(){
-		return "FlightID: " + this.flightID + "\nPlatsnummer: " + this.platsNummer;
-		// TODO
+		return "FlightID: " + this.flightID + "\nPlatsnummer: " + this.platsNummer + 
+				"\nAvgångsdatum: " + this.avgangsDatum + "\nAnkomstdatum: " + this.ankomstDatum +
+				"\nAvgångsort: " + this.avgangsOrt + "\nAnkomstort" + this.ankomstOrt + "\nPris: " + this.pris;
 	}
 
 	public void setAvgangsDatum(Date avgangsDatum) {
@@ -53,5 +62,26 @@ public class FlygBokning implements Bokning{
 	@Override
 	public int pris() {
 		return this.pris;
+	}
+
+	public void setAvgangsOrt(String avgangsOrt) {
+		this.avgangsOrt = avgangsOrt;
+	}
+
+	public String getAvgangsOrt() {
+		return avgangsOrt;
+	}
+
+	public void setAnkomstOrt(String ankomstOrt) {
+		this.ankomstOrt = ankomstOrt;
+	}
+
+	public String getAnkomstOrt() {
+		return ankomstOrt;
+	}
+
+	@Override
+	public Bokningstyp getType() {
+		return Bokningstyp.FLYG;
 	}
 }

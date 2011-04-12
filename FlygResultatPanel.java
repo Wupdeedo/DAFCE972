@@ -24,7 +24,8 @@ public class FlygResultatPanel extends JPanel implements AnswerPanel{
 			bg.add(flight);
 			radioPanel.add(flight);
 		}
-		bg.getElements().nextElement().setSelected(true);
+		if(bg.getElements().hasMoreElements())
+			bg.getElements().nextElement().setSelected(true);
 		this.setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		this.add(radioPanel);
 		this.setVisible(true);
@@ -35,6 +36,7 @@ public class FlygResultatPanel extends JPanel implements AnswerPanel{
 		//parent.flygBokning.setFlightID(this.flightID);
 		// TODO
 		parent.flygBokning.setFlightID(this.flights.get(this.bg.getSelection().getActionCommand()));
+		parent.setPanel(MainWindow.flyg, "FlygAlternativ", parent.createFlygAlternativ());
 	}
 
 	@Override

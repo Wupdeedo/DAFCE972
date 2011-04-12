@@ -8,10 +8,10 @@ public class RegisterWindow {
 	public static void register(DatabaseHandle dbh){
 		JPanel p = new JPanel();
 		p.setLayout(new BoxLayout(p, BoxLayout.PAGE_AXIS));
-		LabelTextFieldPanel user = new LabelTextFieldPanel("Användarnamn: ");
-		LabelTextFieldPanel pass1 = new LabelTextFieldPanel("Lösenord: ", true);
-		LabelTextFieldPanel pass2 = new LabelTextFieldPanel("Upprepa lösenord: ", true);
-		LabelTextFieldPanel fornamn = new LabelTextFieldPanel("Förnamn: ");
+		LabelTextFieldPanel user = new LabelTextFieldPanel("Anvï¿½ndarnamn: ");
+		LabelTextFieldPanel pass1 = new LabelTextFieldPanel("Lï¿½senord: ", true);
+		LabelTextFieldPanel pass2 = new LabelTextFieldPanel("Upprepa lï¿½senord: ", true);
+		LabelTextFieldPanel fornamn = new LabelTextFieldPanel("Fï¿½rnamn: ");
 		LabelTextFieldPanel efternamn = new LabelTextFieldPanel("Efternamn: ");
 		LabelTextFieldPanel telefon = new LabelTextFieldPanel("Telefonnummer: ");
 		LabelTextFieldPanel postort = new LabelTextFieldPanel("postort: ");
@@ -36,7 +36,7 @@ public class RegisterWindow {
 //						fornamn.getTextField().getText(), efternamn.getTextField().getText(),
 //						postort.getTextField().getText(), postnr.getTextField().getText(), 
 //						email.getTextField().getText(), adress.getTextField().getText(),
-//						telefon.getTextField().getText(), null); //TODO ta aldrig bort?
+//						telefon.getTextField().getText(), null); //TODO
 			}
 		}
 	}
