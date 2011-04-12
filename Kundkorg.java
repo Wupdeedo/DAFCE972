@@ -27,9 +27,9 @@ public class Kundkorg extends JPanel implements MouseListener, ComponentListener
 	public Kundkorg(){
 		slices = new ArrayList<Slice>();
 		FlygBokning fb1 = new FlygBokning();
-		FlygBokning fb2 = new FlygBokning();
-		FlygBokning fb3 = new FlygBokning();
-		FlygBokning fb4 = new FlygBokning();
+		BilBokning fb2 = new BilBokning();
+		EventBokning fb3 = new EventBokning();
+		HotellBokning fb4 = new HotellBokning();
 		FlygBokning fb5 = new FlygBokning();
 		slices.add(new Slice(fb1));
 		slices.add(new Slice(fb2));
@@ -77,6 +77,7 @@ public class Kundkorg extends JPanel implements MouseListener, ComponentListener
 		GeneralPath bounds;
 		
 		Arc2D a = new Arc2D.Double(30,20,515,515,start,deg,Arc2D.OPEN);
+		Arc2D b = new Arc2D.Double(center.getX()-, center.getY(),515,515,start,deg,Arc2D.OPEN);
 		
 		for (Slice s : slices){
 			bounds = new GeneralPath();
@@ -98,13 +99,14 @@ public class Kundkorg extends JPanel implements MouseListener, ComponentListener
 		}
 		for (Slice s : slices){
 			Shape b = s.getBounds();
+			switch(s.getBokning().getType()){
+				case FLYG : g.setColor(Color.cyan);break;
+				case HYRBIL : g.setColor(Color.yellow);break;
+				case HOTELL : g.setColor(new Color(255,136,0));break;
+				case EVENT : g.setColor(Color.magenta);break;
+			}
 			g.fill(b);
-			g.setColor(Color.blue);
-			g.draw(b);
-			g.setColor(Color.black);
 		}
-		g.setColor(Color.red);
-		g.draw(kop);
 		this.paintComponents(graph);
 	}
 
@@ -113,6 +115,9 @@ public class Kundkorg extends JPanel implements MouseListener, ComponentListener
 	public void mouseExited(MouseEvent arg0) {}
 	public void mousePressed(MouseEvent e) {
 		Point2D p = e.getPoint();
+		if(kop.contains(p)){
+			//TODO make kop button do something
+		}
 		
 	}
 	public void mouseReleased(MouseEvent e) {}
@@ -129,6 +134,7 @@ public class Kundkorg extends JPanel implements MouseListener, ComponentListener
 class Slice {
 	private Bokning bokning;
 	private Shape bounds;
+	private Shape delbounds;
 	public Slice(Bokning bok){
 		bounds = null;
 		this.setBokning(bok);
@@ -144,5 +150,11 @@ class Slice {
 	}
 	public Shape getBounds() {
 		return bounds;
+	}
+	public void setDelbounds(Shape delbounds) {
+		this.delbounds = delbounds;
+	}
+	public Shape getDelbounds() {
+		return delbounds;
 	}
 }
