@@ -46,6 +46,7 @@ public class FilterPanel extends JPanel implements AnswerPanel{
 		bg.add(b);
 		bg.add(e);
 		bg.add(f);
+		bg.getElements().nextElement().setSelected(true);
 		this.add(radioPanel, c);
 	}
 

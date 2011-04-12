@@ -3,23 +3,27 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
 
 public class FlygAlternativPanel extends JPanel implements MouseListener, AnswerPanel{
 	private static final long serialVersionUID = 1L;
 	private int numSeats;
-	private int xinset = 40;
-	private int yinset = 40;
+	private int xinset = 120;
+	private int yinset = 65;
 	private int seatWidth = 5;
-	private int diffWidth = 2;
+	private int diffWidth = 5;
 	private int seatHeight = 5;
-	private int diffHeight = 5;
+	private int diffHeight = 3;
 	private int midlaneHeight = 20;
 	private int unChosen;
 	private int seatsPerColumn = 3;
@@ -30,7 +34,10 @@ public class FlygAlternativPanel extends JPanel implements MouseListener, Answer
 	private MainWindow parent;
 	private boolean hasInfo = false;
 	private boolean hasClassInfo = false;
-
+	BufferedImage img;
+	private int planeLength = 400;
+	private String reprimand = "Ni måste välja ett flyg innan ni väljer en plats";
+	
 	public FlygAlternativPanel(MainWindow mw, int numSeats, int numSeatsToFill, List<Integer> freeSeats){
 		this.parent = mw;
 		this.numSeats = numSeats;
@@ -38,8 +45,14 @@ public class FlygAlternativPanel extends JPanel implements MouseListener, Answer
 		this.unChosen = numSeatsToFill;
 		this.usedSeats = new LinkedList<Integer>();
 		this.addMouseListener(this);
-		this.setPreferredSize(new Dimension(400,100));
 		hasInfo = true;
+		try {
+			this.img = ImageIO.read(new File("src/bilder/Flygplan.png"));
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		this.setPreferredSize(new Dimension(img.getWidth(), img.getHeight()));
+		this.seatWidth = (planeLength*this.seatsPerColumn*2-diffWidth*numSeats)/numSeats;
 	}
 	
 	public FlygAlternativPanel(MainWindow mw, int numSeats, int numSeatsToFill, Map<Integer, String> freeSeats){
@@ -49,15 +62,25 @@ public class FlygAlternativPanel extends JPanel implements MouseListener, Answer
 		this.unChosen = numSeatsToFill;
 		this.usedSeats = new LinkedList<Integer>();
 		this.addMouseListener(this);
-		this.setPreferredSize(new Dimension(400,100));
 		hasInfo = true;
 		this.hasClassInfo = true;
+		try {
+			this.img = ImageIO.read(new File("src/bilder/Flygplan.png"));
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		this.setPreferredSize(new Dimension(img.getWidth(), img.getHeight()));
 	}
 	
 	public FlygAlternativPanel(MainWindow mw){
 		this.parent = mw;
 		this.addMouseListener(this);
-		this.setPreferredSize(new Dimension(400,100));
+		try {
+			this.img = ImageIO.read(new File("src/bilder/Flygplan.png"));
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		this.setPreferredSize(new Dimension(img.getWidth(), img.getHeight()));
 	}
 	
 	@Override
@@ -65,7 +88,8 @@ public class FlygAlternativPanel extends JPanel implements MouseListener, Answer
 		if(hasInfo){
 			g.drawString("Klicka på en plats för att välja/avvälja den", 0, 0);
 			g.drawString("färgkodning: röd: plats upptagen, blå: plats ledig, grön: plats vald av er", 0, 10);
-			// TODO g.drawImage(ImageIO.read(new File("flygaltpanel.jpg")), 0, 0, null);
+			g.drawImage(this.img, 0, 0, null);
+			
 			g.setColor(Color.red);
 			for(int m = 0; m < 2; m++){
 				for(int n = 0; n < this.numSeats/2; n++){
@@ -126,7 +150,7 @@ public class FlygAlternativPanel extends JPanel implements MouseListener, Answer
 				}
 			}
 		}else{
-			g.drawString("Ni måste välja ett flyg innan ni väljer ett en plats", this.xinset, this.yinset);
+			g.drawString(this.reprimand, this.xinset, this.yinset);
 		}
 	}
 	
@@ -152,7 +176,7 @@ public class FlygAlternativPanel extends JPanel implements MouseListener, Answer
 						if(!freeSeats.contains(m*this.numSeats/2+n)){
 							return;
 						}else if(usedSeats.contains(m*this.numSeats/2+n)){
-							usedSeats.remove((Object)(m*this.numSeats/2+n)); // TODO check if correct
+							usedSeats.remove((Object)(m*this.numSeats/2+n));
 							this.repaint();
 							return;
 						}else if(this.unChosen > this.usedSeats.size()){
@@ -191,7 +215,21 @@ public class FlygAlternativPanel extends JPanel implements MouseListener, Answer
 
 	@Override
 	public void OkAction() {
-		// TODO Auto-generated method stub
-		this.parent.flygBokning.setPlatsNummer(this.usedSeats);
+		if(hasInfo){
+			if(this.hasClassInfo){
+				List<Integer> l = new LinkedList<Integer>();
+				for(int i : this.usedSeatsbyClass.keySet())
+					l.add(i);
+				this.parent.flygBokning.setPlatsNummer(l);
+			}else{
+				this.parent.flygBokning.setPlatsNummer(this.usedSeats);
+			}
+			this.parent.setPanel(MainWindow.flyg, "Bekr�ftelse", parent.createBekraftelse()); // TODO add this on all the middlepanels.
+		}else{
+			this.parent.showOptionPanel("FlygAlternativ", true);
+			this.parent.getOptionTrees().get(this.parent.getCurrentPanel()).switchButtons("FlygAlternativ");
+			this.parent.getOptionTrees().get(this.parent.getCurrentPanel()).setButtonDone("FlygAlternativ", false);
+			this.parent.getOptionTrees().get(this.parent.getCurrentPanel()).showNextPanel("FlygAlternativ", false);
+		}
 	}
 }

@@ -37,7 +37,7 @@ public class TreePanel extends ImagePanel implements ActionListener{
 	private MainWindow parent;
 	
 	private static Color buttonDoneColor = Color.green;
-	private static Color buttonNotDoneColor = Color.gray;
+	private static Color buttonNotDoneColor = Color.white;
 
 	public TreePanel(MainWindow parent, BufferedImage img, String[] buttonNames) {
 		super(img);
@@ -53,8 +53,10 @@ public class TreePanel extends ImagePanel implements ActionListener{
 		for(int n = 0; n < this.numButtons; n++){
 			this.rightButtons[n] = new JButton(buttonNames[n]);
 			this.rightButtons[n].setMargin(new Insets(0,0,0,0));
+			this.rightButtons[n].setBackground(buttonNotDoneColor);
 			this.leftButtons[n] = new JButton(buttonNames[n]);
 			this.leftButtons[n].setMargin(new Insets(0,0,0,0));
+			this.leftButtons[n].setBackground(buttonNotDoneColor);
 			this.buttonUses[n] = buttonNotDoneValue;
 		}
 		
@@ -183,14 +185,19 @@ public class TreePanel extends ImagePanel implements ActionListener{
 	}
 	
 	// Don't use this method on the last panel(bekr�ftelse)
-	public void showNextPanel(String buttonName){
+	public void showNextPanel(String buttonName, boolean show){
 		for(int n = 0; n < leftButtons.length-1; n++){
 			if(leftButtons[n].getText().equals(buttonName)){
 				JPanel pr = this.rightList.get(n+1);
 				JPanel pl = this.leftList.get(n+1);
-				((CardLayout)pr.getLayout()).show(pr, "invisible");
-				((CardLayout)pl.getLayout()).show(pl, "visible");
-				this.parent.showOptionPanel(leftButtons[n+1].getText(), true);
+				if(show){
+					((CardLayout)pr.getLayout()).show(pr, "invisible");
+					((CardLayout)pl.getLayout()).show(pl, "visible");
+				}else{
+					((CardLayout)pr.getLayout()).show(pr, "visible");
+					((CardLayout)pl.getLayout()).show(pl, "invisible");
+				}
+				this.parent.showOptionPanel(leftButtons[n+1].getText(), show);
 				return;
 			}
 		}
