@@ -1,18 +1,18 @@
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 
 
 public class FilterPanel extends JPanel implements AnswerPanel{
 	private static final long serialVersionUID = 1L;
 	LabelTextFieldPanel minPris = new LabelTextFieldPanel("Minpris: ", 1);
 	LabelTextFieldPanel maxPris = new LabelTextFieldPanel("Maxpris: ", 1);
-	LabelTextFieldPanel minByten = new LabelTextFieldPanel("Min. antal byten: ", 1);
-	LabelTextFieldPanel maxByten = new LabelTextFieldPanel("Max. antal byten: ", 1);
-	LabelTextFieldPanel minVikt = new LabelTextFieldPanel("Min. tillåten bagagevikt(kg): ", 1);
-	LabelTextFieldPanel maxVikt = new LabelTextFieldPanel("Max. tillåten bagagevikt(kg): ", 1);
+	ButtonGroup bg = new ButtonGroup();
 	MainWindow parent;
 	
 	public FilterPanel(MainWindow mw){
@@ -27,29 +27,32 @@ public class FilterPanel extends JPanel implements AnswerPanel{
 		c.gridy = 0;
 		this.minPris.getTextField().setColumns(5);
 		this.add(this.minPris, c);
-		c.gridx = 1;
+		c.gridy = 1;
 		this.maxPris.getTextField().setColumns(5);
 		this.add(this.maxPris, c);
-		c.gridx = 0;
-		c.gridy = 1;
-		this.minByten.getTextField().setColumns(5);
-		this.add(this.minByten, c);
 		c.gridx = 1;
-		this.maxByten.getTextField().setColumns(5);
-		this.add(this.maxByten, c);
-		c.gridx = 0;
-		c.gridy = 2;
-		this.minVikt.getTextField().setColumns(5);
-		this.add(this.minVikt, c);
-		c.gridx = 1;
-		this.maxVikt.getTextField().setColumns(5);
-		this.add(this.maxVikt, c);
+		c.gridy = 0;
+		JPanel radioPanel = new JPanel();
+		radioPanel.setLayout(new GridLayout(0,1));
+		JRadioButton b = new JRadioButton("Business");
+		b.setActionCommand("B");
+		JRadioButton e = new JRadioButton("Economy");
+		e.setActionCommand("E");
+		JRadioButton f = new JRadioButton("First class");
+		f.setActionCommand("F");
+		radioPanel.add(b);
+		radioPanel.add(e);
+		radioPanel.add(f);
+		bg.add(b);
+		bg.add(e);
+		bg.add(f);
+		this.add(radioPanel, c);
 	}
 
 	@Override
 	public void OkAction() {
 		// TODO make the search different
-		
+		this.parent.flygBokning.setKlass(this.bg.getSelection().getActionCommand());
 	}
 
 	@Override

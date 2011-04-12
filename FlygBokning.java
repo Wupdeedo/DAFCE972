@@ -9,7 +9,9 @@ public class FlygBokning implements Bokning{
 	private Date ankomstDatum;
 	private String avgangsOrt;
 	private String ankomstOrt;
+	private String klass;
 	private int pris;
+	private boolean searchDone = false;
 	
 	public FlygBokning(){
 	}
@@ -19,6 +21,7 @@ public class FlygBokning implements Bokning{
 		this.ankomstOrt = ankomstOrt;
 		this.avgangsDatum = avgangsDatum;
 		this.ankomstDatum = ankomstDatum;
+		this.searchDone = true;
 	}
 
 	public void setFlightID(int flightID) {
@@ -83,5 +86,18 @@ public class FlygBokning implements Bokning{
 	@Override
 	public Bokningstyp getType() {
 		return Bokningstyp.FLYG;
+	}
+
+	@Override
+	public boolean searchIsDone() {
+		return this.searchDone;
+	}
+
+	public void setKlass(String klass) {
+		this.klass = klass;
+	}
+
+	public String getKlass() {
+		return klass;
 	}
 }

@@ -218,7 +218,7 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 		c.gridheight = 64;
 		c.gridwidth = 1; // ?
 		try {
-			leftExtraPanel = new ImagePanel(ImageIO.read(new File("bilder/design4_01.png")));
+			leftExtraPanel = new ImagePanel(ImageIO.read(new File("src/bilder/design4_01.png")));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -231,7 +231,7 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 		c.gridheight = 6; //?
 		c.gridwidth = 30; // ?
 		try {
-			bannerPanel = new ImagePanel(ImageIO.read(new File("bilder/design4_02.png")));
+			bannerPanel = new ImagePanel(ImageIO.read(new File("src/bilder/design4_02.png")));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -244,7 +244,7 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 		c.gridheight = 58;
 		c.gridwidth = 6;
 		try {
-			adPanel = new ImagePanel(ImageIO.read(new File("bilder/design4_04.png")));
+			adPanel = new ImagePanel(ImageIO.read(new File("src/bilder/design4_04.png")));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -268,7 +268,7 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 		c.gridwidth = 6;
 		
 		try {
-			rightUsedPanel = new ImagePanel(ImageIO.read(new File("bilder/design4_06.png")));
+			rightUsedPanel = new ImagePanel(ImageIO.read(new File("src/bilder/design4_06.png")));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -316,7 +316,7 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 		c.gridheight = 64;
 		c.gridwidth = 1;
 		try {
-			rightExtraPanel = new ImagePanel(ImageIO.read(new File("bilder/design4_03.png")));
+			rightExtraPanel = new ImagePanel(ImageIO.read(new File("src/bilder/design4_03.png")));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -408,24 +408,33 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 			this.panelMap.put(flyg, this.createInnerPanelMap(flyg, almanacka, filter));
 			this.optionTrees.put(flyg, new TreePanel(this, null, this.panelMap.get(flyg).keySet().toArray(new String[0])));
 			this.optionTrees.get(flyg).showPanel("Svar", true);
-		}// TODO
+		}// TODO almanacka/filter?
 	}
 	
-	public void carSearch(Date utlamningsDatum, Date inlamningsDatum, String utlamningsOrt,
+	public void carSearch(Date utlamningsDatum, Date inlamningsDatum, int utlamningsOrt,
 			String inlamningsOrt, String kategori){
-		
+		this.bilBokning = new BilBokning(utlamningsDatum, inlamningsDatum, utlamningsOrt,inlamningsOrt, kategori);
+		this.panelMap.put(hyrbil, this.createInnerPanelMap(hyrbil, false, false));
+		this.optionTrees.put(hyrbil, new TreePanel(this, null, this.panelMap.get(hyrbil).keySet().toArray(new String[0])));
+		this.optionTrees.get(hyrbil).showPanel("Svar", true);
 	}
 	
-	public void hotelSearch(){
-		
+	public void hotelSearch(String ort, Date checkInDatum, Date checkUtDatum, int antalRum, int antalPersoner){
+		this.hotellBokning = new HotellBokning(ort, checkInDatum, checkUtDatum, antalRum, antalPersoner);
+		this.panelMap.put(hotell, this.createInnerPanelMap(hotell, false, false));
+		this.optionTrees.put(hotell, new TreePanel(this, null, this.panelMap.get(hotell).keySet().toArray(new String[0])));
+		this.optionTrees.get(hotell).showPanel("Svar", true);
 	}
 	
-	public void eventSearch(){
-		
+	public void eventSearch(String ort, Date datum, boolean almanacka){
+		this.eventBokning = new EventBokning(ort, datum);
+		this.panelMap.put(evenemang, this.createInnerPanelMap(evenemang, almanacka, false));
+		this.optionTrees.put(evenemang, new TreePanel(this, null, this.panelMap.get(evenemang).keySet().toArray(new String[0])));
+		this.optionTrees.get(evenemang).showPanel("Svar", true);
 	}
 	
-	public void infoSearch(){
-		
+	public void infoSearch(String land){
+		// TODO träd
 	}
 
 	@Override
