@@ -33,15 +33,20 @@ public class DatabaseHandle {
 	private PreparedStatement getTotalSpots;
 	private PreparedStatement bookEvent;
 	private PreparedStatement logIn;
+	private PreparedStatement searchWithFilters;
 	
 	public DatabaseHandle(){
 		try
         {
             Class.forName("org.postgresql.Driver");
             con = DriverManager.getConnection (LoginData.URL, LoginData.USER, LoginData.PASSWORD);
-            vbc = con.prepareStatement("SELECT Vaccination.VaccBeskrivning FROM Vaccination NATURAL INNER JOIN VacciLand NATURAL INNER JOIN Landsinfo WHERE Landsinfo.Land = ?");
+            //Stöder full sökning av vaccinationsinformation samt landsinfo baserat på landsnamn.
+            vbc = con.prepareStatement("SELECT Vaccination.VaccBeskrivning, Landsinfo FROM Vaccination NATURAL INNER JOIN VacciLand NATURAL INNER JOIN Landsinfo WHERE Landsinfo.Land = ?");
             fa = con.prepareStatement("SELECT Avgangsdatum, MIN(Kostnad) AS Pris FROM Flight NATURAL INNER JOIN Stol NATURAL INNER JOIN Ort WHERE Avgangsort = ? AND Ankomstort = ? AND Avgangsdatum BETWEEN ? AND ? GROUP BY Avgangsdatum");
+            //Har stöd för Sökning av flyg enligt bollen. man söker på Utresedatum, Avgangsort och ankomstort. För att söka hemresa byter man plats på dessa fält.
             sf = con.prepareStatement("SELECT FlightID, Avgangstid, Ankomsttid, MIN(Kostnad) AS MinKostnad FROM Flight NATURAL INNER JOIN Flygplan NATURAL INNER JOIN Flygplanstyp WHERE Avgangsdatum = ? AND Avgangsort = ? AND Ankomstort = ? AND Platser > (SELECT COUNT(*) FROM Flightbokning WHERE Flightbokning.FlightID = Flight.FlightID) GROUP BY FlightID");
+            //Variant med filter. Har atm stöd för sållning på pris.
+            searchWithFilters = con.prepareStatement("SELECT FlightID, Avgangstid, Ankomsttid, MIN(Kostnad) AS MinKostnad FROM Flight NATURAL INNER JOIN Flygplan NATURAL INNER JOIN Flygplanstyp WHERE Avgangsdatum = ? AND Avgangsort = ? AND Ankomstort = ? AND Platser > (SELECT COUNT(*) FROM Flightbokning WHERE Flightbokning.FlightID = Flight.FlightID) AND MinPris > ? AND MinPris < ? GROUP BY FlightID");
             gac = con.prepareStatement("SELECT Typ, COUNT(*) AS Tillg FROM Stol NATURAL INNER JOIN Flight WHERE FlightID = ? AND NOT EXISTS (SELECT FlightID, Nummer FROM Flightbokning WHERE Flight.FlightID = Flightbokning.FlightID AND Stol.Nummer = Flightbokning.Nummer) GROUP BY Typ");
             gan = con.prepareStatement("SELECT Nummer FROM Stol NATURAL INNER JOIN Flight WHERE FlightID = ? AND Typ = ? AND NOT EXISTS (SELECT * FROM Flightbokning WHERE Flightbokning.Nummer = Stol.Nummer)");
             createBooking = con.prepareStatement("INSERT INTO TABLE Bokning VALUES (?)");
@@ -49,12 +54,16 @@ public class DatabaseHandle {
             bookFlightChair = con.prepareStatement("INSERT INTO TABLE Flightbokning VALUES (?, ?, ?)");
             createAccount = con.prepareStatement("INSERT INTO Konto VALUES (?, decode(md5(?), 'hex'), ?, ?, ?, ?, ?, ?, ?, ?)");
             getAccountID = con.prepareStatement("SELECT KontoID FROM Konto WHERE Login = ?");
+            //Stöder sökning av bilar baserat på utlämningsort och de datum bilen skall bokas. Returnerar all relevant information för klassning.
             getAvailableCars = con.prepareStatement("SELECT BilID, Modell, Tillverkare, Drift, Vaxel, DepotID FROM Bil NATURAL INNER JOIN Bilmodell WHERE NOT EXISTS (SELECT * FROM Bilschema WHERE Bilschema.BilID = Bil.BilID AND (? > Hamtdatum AND ? < Lamningsdatum) AND (? > Hamtdatum AND ? < Lamningsdatum)) AND (SELECT OrtID FROM Ort WHERE Ort = ?) = (SELECT Lamningsplats FROM Bilschema WHERE Lamningsdatum = (SELECT MAX(Lamningsdatum) FROM Bilschema AS a WHERE a.BilID = Bilschema.BilID))");
             bookCar = con.prepareStatement("INSERT INTO Bilschema VALUES (?, ?, ?, ?, ?, ?)");
             getDepots = con.prepareStatement("SELECT DepotID FROm Depot NATURAL INNER JOIN Ort WHERE Ort = ?");
+            //Hämtar alla hotell som har minst ett rum ledigt.
             getAvailableHotels = con.prepareStatement("SELECT HotellID, Namn, Ort, Stjarnor, Beskrivning, MIN(Kostnad) FROM Hotell NATURAL INNER JOIN Rum NATURAL INNER JOIN Ort WHERE Ort = ? AND EXISTS (SELECT RumsID FROM Rum WHERE Rum.HotellID = Hotell.HotellID MINUS SELECT RumsID FROM Rumsschema WHERE (? > Frandatum AND ? < Tilldatum) AND (? > Frandatum AND ? < Tilldatum))");
+            //Hämtar alla rum vid ett givet hotell som är lediga under den angivna tiden. Kan kombineras med föregående query för att få stöd för bokning av flera rum.
             getRooms = con.prepareStatement("SELECT RumsID FROM Rum WHERE HotellID = ? EXCEPT SELECT RumsID FROM Rumsschema WHERE (? > Frandatum AND ? < Tilldatum) AND (? > Frandatum AND ? < Tilldatum)");
             bookRoom = con.prepareStatement("INSERT INTO Rumsschema VALUES (?,?,?,?)");
+            //Stöder sökning av events baserat på ort samt en datumrange.
             getEventsByLocation = con.prepareStatement("SELECT EvenemangsID, Namn, Startdatum, Slutdatum, Starttid, Sluttid, Beskrivning, PlatsNamn, Kostnad FROM Evenemang NATURAL INNER JOIN Platser NATURAL INNER JOIN Ort WHERE Ort = ? AND Startdatum BETWEEN ? AND ? AND AntalPlatser > (SELECT SUM(Antal) FROM Evenemangschema WHERE Evenemang.EvenemangsID=Evenemangsschema.EvenemangsID)");
             getEventSpotsLeft = con.prepareStatement("SELECT SUM(Antal) AS Sum FROM Evenemangschema WHERE EvenemangsID = ?");
             getTotalSpots = con.prepareStatement("Select Antalplatser FROM Evenemang WHERE EvenemangsID = ?");
@@ -220,6 +229,18 @@ public class DatabaseHandle {
 		sf.setDate(1, avgangsdatum);
 		sf.setString(2, avgangsort);
 		sf.setString(3, ankomstort);
+		return sf.executeQuery();
+		
+	}
+	
+	public ResultSet searchFlightFilters(Date avgangsdatumRaw, String avgangsort, String ankomstort, int minpris, int maxpris) throws SQLException{
+		java.sql.Date avgangsdatum = new java.sql.Date(avgangsdatumRaw.getTime());
+		searchWithFilters.setDate(1, avgangsdatum);
+		searchWithFilters.setString(2, avgangsort);
+		searchWithFilters.setString(3, ankomstort);
+		searchWithFilters.setInt(4, minpris);
+		searchWithFilters.setInt(5, maxpris);
+		
 		return sf.executeQuery();
 		
 	}
