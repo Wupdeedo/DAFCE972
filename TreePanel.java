@@ -11,7 +11,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import javax.imageio.ImageIO;
-import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -34,8 +33,6 @@ public class TreePanel extends ImagePanel implements ActionListener{
 	private static int buttonDoneValue = 1;
 	
 	private JPanel leftPanel = new JPanel();
-	//private ImagePanel centerPanel = new ImagePanel(loadImage("firefly.jpg"));
-	private JPanel centerPanel = new JPanel();
 	private JPanel rightPanel = new JPanel();
 	private MainWindow parent;
 	
@@ -79,9 +76,6 @@ public class TreePanel extends ImagePanel implements ActionListener{
 	private void addPanels(){
 		Box box = Box.createHorizontalBox();
 		box.add(leftPanel);
-		//centerPanel.setPreferredSize(new Dimension(centerPanel.getImage().getWidth(), centerPanel.getImage().getHeight()));
-		centerPanel.setBorder(BorderFactory.createLineBorder(Color.blue));
-		box.add(centerPanel);
 		box.add(rightPanel);
 		this.add(box);
 	}
@@ -164,6 +158,39 @@ public class TreePanel extends ImagePanel implements ActionListener{
 				JPanel pl = this.leftList.get(n);
 				((CardLayout)pr.getLayout()).next(pr);
 				((CardLayout)pl.getLayout()).next(pl);
+				return;
+			}
+		}
+	}
+	
+	public void showPanel(String buttonName, boolean visible){
+		for(int n = 0; n < leftButtons.length; n++){
+			if(leftButtons[n].getText().equals(buttonName)){
+				JPanel pr = this.rightList.get(n);
+				JPanel pl = this.leftList.get(n);
+				if(visible){
+					((CardLayout)pr.getLayout()).show(pr, "invisible");
+					((CardLayout)pl.getLayout()).show(pl, "visible");
+					this.parent.showOptionPanel(buttonName, true);
+				}else{
+					((CardLayout)pr.getLayout()).show(pr, "visible");
+					((CardLayout)pl.getLayout()).show(pl, "invisible");
+					this.parent.showOptionPanel(buttonName, false);
+				}
+				return;
+			}
+		}
+	}
+	
+	// Don't use this method on the last panel(bekräftelse)
+	public void showNextPanel(String buttonName){
+		for(int n = 0; n < leftButtons.length-1; n++){
+			if(leftButtons[n].getText().equals(buttonName)){
+				JPanel pr = this.rightList.get(n+1);
+				JPanel pl = this.leftList.get(n+1);
+				((CardLayout)pr.getLayout()).show(pr, "invisible");
+				((CardLayout)pl.getLayout()).show(pl, "visible");
+				this.parent.showOptionPanel(leftButtons[n+1].getText(), true);
 				return;
 			}
 		}

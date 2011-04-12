@@ -1,0 +1,625 @@
+From b550321c8677e2d4de434bccb8327cd6154a16bc Mon Sep 17 00:00:00 2001
+From: unknown <Gustav@.(none)>
+Date: Sun, 10 Apr 2011 19:28:17 +0200
+Subject: [PATCH] Added the tree and the structure of the MainWindow
+
+---
+ BorderPanel.java         |   54 +++++++++++
+ ImagePanel.java          |   23 +++++
+ LabelTextFieldPanel.java |   42 +++++++++
+ MainWindow.java          |  219 ++++++++++++++++++++++++++++++++++++++-------
+ TreePanel.java           |  171 ++++++++++++++++++++++++++++++++++++
+ 5 files changed, 475 insertions(+), 34 deletions(-)
+ create mode 100644 BorderPanel.java
+ create mode 100644 ImagePanel.java
+ create mode 100644 LabelTextFieldPanel.java
+ create mode 100644 TreePanel.java
+
+diff --git a/BorderPanel.java b/BorderPanel.java
+new file mode 100644
+index 0000000..a7deb02
+--- /dev/null
++++ b/BorderPanel.java
+@@ -0,0 +1,54 @@
++import java.awt.Component;
++import java.awt.event.ActionEvent;
++import java.awt.event.ActionListener;
++
++import javax.swing.BorderFactory;
++import javax.swing.Box;
++import javax.swing.BoxLayout;
++import javax.swing.JButton;
++import javax.swing.JPanel;
++
++
++public class BorderPanel extends JPanel implements ActionListener{
++	private static final long serialVersionUID = 1L;
++	private MainWindow parent;
++	private JButton okButton;
++	private JButton cancelButton;
++	private String title;
++	
++	public BorderPanel(MainWindow parent, String title, Component addable){
++		super();
++		this.parent = parent;
++		this.title = title;
++		this.setBorder(BorderFactory.createTitledBorder(title));
++		this.setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
++		
++		this.add(addable);
++		
++		cancelButton = new JButton("Cancel");
++		okButton = new JButton("Ok");
++		
++		cancelButton.addActionListener(this);
++		okButton.addActionListener(this);
++		
++		Box b = new Box(BoxLayout.LINE_AXIS);
++		b.add(cancelButton);
++		b.add(Box.createVerticalStrut(50));
++		b.add(okButton);
++		this.add(b);
++		this.setVisible(false);
++	}
++
++	@Override
++	public void actionPerformed(ActionEvent ae) {
++		if(ae.getSource().equals(this.okButton)){
++			System.out.println(title);
++			this.parent.showOptionPanel(title, false);
++			this.parent.getOptionTrees().get(this.parent.getCurrentPanel()).switchButtons(this.title);
++			this.parent.getOptionTrees().get(this.parent.getCurrentPanel()).setButtonDone(this.title, true);
++		}else if(ae.getSource().equals(this.cancelButton)){
++			this.parent.showOptionPanel(title, false);
++			this.parent.getOptionTrees().get(this.parent.getCurrentPanel()).switchButtons(this.title);
++		}
++	}
++}
+diff --git a/ImagePanel.java b/ImagePanel.java
+new file mode 100644
+index 0000000..332cd1d
+--- /dev/null
++++ b/ImagePanel.java
+@@ -0,0 +1,23 @@
++import java.awt.Graphics;
++import java.awt.image.BufferedImage;
++
++import javax.swing.JPanel;
++
++
++public class ImagePanel extends JPanel{
++	private static final long serialVersionUID = 1L;
++	BufferedImage img;
++	
++	public ImagePanel(BufferedImage img){
++		this.img = img;
++	}
++	
++	@Override
++	public void paintComponent(Graphics g){
++		g.drawImage(this.img, 0, 0, null);
++	}
++	
++	public BufferedImage getImage(){
++		return this.img;
++	}
++}
+diff --git a/LabelTextFieldPanel.java b/LabelTextFieldPanel.java
+new file mode 100644
+index 0000000..cf5751b
+--- /dev/null
++++ b/LabelTextFieldPanel.java
+@@ -0,0 +1,42 @@
++import javax.swing.BoxLayout;
++import javax.swing.JLabel;
++import javax.swing.JPanel;
++import javax.swing.JTextField;
++
++
++/**
++ * LabelTextFieldPanel is a class made for 
++ * having a label and a textField next to each other.
++ *
++ */
++public class LabelTextFieldPanel extends JPanel{
++	private static final long serialVersionUID = 1L;
++	private JLabel label;
++	private JTextField textField;
++	
++	public LabelTextFieldPanel(String labelText){
++		this.label = new JLabel(labelText);
++		this.textField = new JTextField();
++		this.init();
++	}
++	
++	public LabelTextFieldPanel(String labelText, String startText){
++		this.label = new JLabel(labelText);
++		this.textField = new JTextField(startText);
++		this.init();
++	}
++	
++	private void init(){
++		this.setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
++		this.add(this.label);
++		this.add(this.textField);
++	}
++	
++	public JLabel getLabel(){
++		return this.label;
++	}
++	
++	public JTextField getTextField(){
++		return this.textField;
++	}
++}
+diff --git a/MainWindow.java b/MainWindow.java
+index dd9c982..20d29e2 100644
+--- a/MainWindow.java
++++ b/MainWindow.java
+@@ -1,15 +1,28 @@
++import java.awt.CardLayout;
+ import java.awt.Color;
++import java.awt.Dimension;
+ import java.awt.GridBagConstraints;
+ import java.awt.GridBagLayout;
++import java.awt.image.BufferedImage;
++import java.io.File;
++import java.io.IOException;
++import java.util.LinkedHashMap;
++import java.util.LinkedList;
++import java.util.List;
++import java.util.Map;
++import java.util.Map.Entry;
+ 
++import javax.imageio.ImageIO;
+ import javax.swing.BorderFactory;
+-import javax.swing.JButton;
++import javax.swing.BoxLayout;
+ import javax.swing.JFrame;
++import javax.swing.JLabel;
+ import javax.swing.JPanel;
+ import javax.swing.JScrollPane;
+ 
+ 
+ public class MainWindow extends JFrame{
++	private static final long serialVersionUID = 1L;
+ 	private JPanel mainPanel = new JPanel();
+ 	private JScrollPane mainScrollPane = new JScrollPane(mainPanel);
+ 	private JPanel bannerPanel = new JPanel();
+@@ -17,83 +30,221 @@ public class MainWindow extends JFrame{
+ 	private JPanel rightExtraPanel = new JPanel();
+ 	private JPanel adPanel = new JPanel();
+ 	private JPanel searchPanel = new JPanel();
++	private JPanel rightUsedPanel = new JPanel();
+ 	private JPanel loginPanel = new JPanel();
++	private JPanel treePanel = new JPanel();
++	
++	Map<String, Map<String, JPanel>> panelMap = createPanelMap();
++	
++	private final static String flyg = "flyg";
++	private final static String hyrbil = "hyrbil";
++	private final static String hotell = "hotell";
++	private final static String evenemang = "evenemang";
++	
++	private String currentPanel;
++	
++	private Map<String, TreePanel> optionTrees = createOptionTrees();
++	
++	private static List<String> searchOptions = createOptions();
+ 	
+ 	public MainWindow(){
+-		this.addButtons();
++		this.addTrees();
++		this.createSearchPanel();
+ 		this.setBorders();
+ 		this.initPanels();
+-	
++		
++		
+ 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+-		this.setSize(1024, 768);
++		this.setSize(1024+30, 768+41); // TODO dimension?
+ 		this.setVisible(true);
++		
++		((CardLayout)searchPanel.getLayout()).show(searchPanel, flyg);
++		this.showSearchOption(flyg);
++	}
++	
++	private Map<String, Map<String, JPanel>> createPanelMap(){
++		Map<String, Map<String, JPanel>> panelMap = new LinkedHashMap<String, Map<String, JPanel>>();
++		
++		Map<String, JPanel> m = new LinkedHashMap<String, JPanel>();
++		m.put("Svar", new JPanel()); // TODO create the option panels
++		m.put("FlygAlternativ", createFlygAlternativ(""));
++		m.put("Info", new BorderPanel(this, "Info", new JLabel("När jag var ett vårtsvinsbarn.")));
++		m.put("Bekräftelse", new BorderPanel(this, "Bekräftelse", new JLabel("SHHHHPOOOOOOFFF")));
++		panelMap.put(flyg, m);
++		
++		m = new LinkedHashMap<String, JPanel>();
++		m.put("Svar", new JPanel());
++		m.put("BilAlternativ", new JPanel());
++		m.put("Info", new JPanel());
++		m.put("Bekräftelse", new JPanel());
++		panelMap.put(hyrbil, m);
++		
++		m = new LinkedHashMap<String, JPanel>();
++		m.put("Svar", new JPanel());
++		m.put("HotellAlternativ", new JPanel());
++		m.put("Info", new JPanel());
++		m.put("Bekräftelse", new JPanel());
++		panelMap.put(hotell, m);
++		
++		m = new LinkedHashMap<String, JPanel>();
++		m.put("Svar", new JPanel());
++		m.put("EvenemangsAlternativ", new JPanel());
++		m.put("Info", new JPanel());
++		m.put("Bekräftelse", new JPanel());
++		panelMap.put(evenemang, m);
++		
++		return panelMap;
+ 	}
+ 	
++	private static List<String> createOptions(){
++		List<String> ret = new LinkedList<String>();
++		ret.add(flyg);
++		ret.add(hyrbil);
++		ret.add(hotell);
++		ret.add(evenemang);
++		return ret;
++	}
++	
++	// TODO remove this method in end-version
+ 	private void setBorders(){
+ 		leftExtraPanel.setBorder(BorderFactory.createLineBorder(Color.black));
+ 		rightExtraPanel.setBorder(BorderFactory.createLineBorder(Color.black));
+ 		bannerPanel.setBorder(BorderFactory.createLineBorder(Color.black));
+ 		adPanel.setBorder(BorderFactory.createLineBorder(Color.black));
+ 		searchPanel.setBorder(BorderFactory.createLineBorder(Color.black));
+-		loginPanel.setBorder(BorderFactory.createLineBorder(Color.black));
++		rightUsedPanel.setBorder(BorderFactory.createLineBorder(Color.black));
+ 	}
+ 	
+-	private void addButtons(){
+-		leftExtraPanel.add(new JButton("left"));
+-		rightExtraPanel.add(new JButton("right"));
+-		bannerPanel.add(new JButton("banner"));
+-		adPanel.add(new JButton("ad"));
+-		searchPanel.add(new JButton("search"));
+-		loginPanel.add(new JButton("log in"));
++	private Map<String, TreePanel> createOptionTrees(){
++		Map<String, TreePanel> ret = new LinkedHashMap<String, TreePanel>();
++		
++		BufferedImage img;
++		try {
++			img = ImageIO.read(new File("t3.jpg")); //TODO input picture of the tree
++			for(String s : this.panelMap.keySet()){
++				ret.put(s, new TreePanel(this, img, this.panelMap.get(s).keySet().toArray(new String[0])));
++			}
++		} catch (IOException e) {
++			e.printStackTrace();
++		}
++		return ret;
++	}
++	
++	private void addTrees(){
++		treePanel.setLayout(new CardLayout());
++		int n = 0;
++		for(TreePanel tp : this.optionTrees.values()){
++			System.out.println(searchOptions.get(n));
++			treePanel.add(tp, searchOptions.get(n));
++			n++;
++		}
+ 	}
+ 	
+ 	private void initPanels(){
+ 		mainPanel.setLayout(new GridBagLayout());
+ 		GridBagConstraints c = new GridBagConstraints();
+-	 
++		
+ 		/**
+ 		 * Units of 32 pixels - gridwidth = 3 -> height in pixels = 96. (if the dimensions are 1024x768)
+ 		 */
+ 		c.gridy = 0;
+ 		c.gridx = 0;
+ 		c.gridheight = 64;
+-		c.gridwidth = 3; // ?
++		c.gridwidth = 1; // ?
++		leftExtraPanel.setPreferredSize(new Dimension(32*1,768));
+ 		mainPanel.add(leftExtraPanel,c);
+-	
++		
+ 		c.gridy = 0;
+-		c.gridx = 3; // ?
++		c.gridx = 1; // ?
+ 		c.gridheight = 6; //?
+-		c.gridwidth = 26; // ?
++		c.gridwidth = 30; // ?
++		bannerPanel.setPreferredSize(new Dimension(32*30,32*6));
+ 		mainPanel.add(bannerPanel,c);
+-	
++		
+ 		c.gridy = 6;
+-		c.gridx = 3;
+-		c.gridheight = 58; //?
+-		c.gridwidth = 6; // ?
++		c.gridx = 1;
++		c.gridheight = 58;
++		c.gridwidth = 6;
++		adPanel.setPreferredSize(new Dimension(32*6,768-32*6));
+ 		mainPanel.add(adPanel,c);
+-	 
++		
+ 		c.gridy = 6;
+-		c.gridx = 9;
+-		c.gridheight = 58; //?
+-		c.gridwidth = 18; // ?
++		c.gridx = 7;
++		c.gridheight = 58;
++		c.gridwidth = 18;
++		searchPanel.setPreferredSize(new Dimension(32*18,768-32*6));
+ 		mainPanel.add(searchPanel,c);
+ 		
+ 		c.gridy = 6;
+-		c.gridx = 27;
+-		c.gridheight = 58; //?
+-		c.gridwidth = 2; // ?
+-		mainPanel.add(loginPanel,c);
++		c.gridx = 25;
++		c.gridheight = 58;
++		c.gridwidth = 6;
++		
++		rightUsedPanel.setLayout(new BoxLayout(this.rightUsedPanel, BoxLayout.PAGE_AXIS));
++		rightUsedPanel.add(loginPanel);
++		rightUsedPanel.add(treePanel);
++		rightUsedPanel.setPreferredSize(new Dimension(32*6,768-32*6));
++		mainPanel.add(rightUsedPanel,c);
+ 		
+ 		c.gridy = 0;
+-		c.gridx = 29;
+-		c.gridheight = 64; //?
+-		c.gridwidth = 3; // ?
++		c.gridx = 31;
++		c.gridheight = 64;
++		c.gridwidth = 1;
++		rightExtraPanel.setPreferredSize(new Dimension(32*1,768));
+ 		mainPanel.add(rightExtraPanel,c);
+ 		
+ 		this.add(this.mainScrollPane);
+ 	}
+ 	
++	private void createSearchPanel(){
++		this.searchPanel.setLayout(new CardLayout());
++		for(String s : this.panelMap.keySet()){
++			JPanel p = new JPanel();
++			p.setLayout(new BoxLayout(p, BoxLayout.PAGE_AXIS));
++			// TODO add search-circles
++			for(Entry<String, JPanel> e : this.panelMap.get(s).entrySet()){
++				p.add(e.getValue());
++			}
++			this.searchPanel.add(p, s);
++		}
++	}
++	
++	private BorderPanel createFlygAlternativ(String s){		
++		JPanel p = new JPanel();
++		
++		LabelTextFieldPanel bagage = new LabelTextFieldPanel("Extravikt bagage(kg): ", "0");
++		bagage.getTextField().setColumns(10);
++		LabelTextFieldPanel handBagage = new LabelTextFieldPanel("Extravikt bagage(kg): ", "0");
++		handBagage.getTextField().setColumns(10);
++		
++		p.add(bagage);
++		p.add(handBagage);
++		BorderPanel ret = new BorderPanel(this, "FlygAlternativ" + s, p);
++		return ret;
++	}
++	
++	// Shows the correct view (flyg, hyrbil, hotell,...)
++	public void showSearchOption(String searchOption){
++		((CardLayout)this.searchPanel.getLayout()).show(this.searchPanel, searchOption);
++		((CardLayout)this.treePanel.getLayout()).show(this.treePanel, searchOption);
++		this.currentPanel = searchOption;
++		// TODO needs to be changed when loginPanel and searchPanel are changed
++	}
++	
++	public void showOptionPanel(String panelName, boolean show){ 
++		//searchOption = flyg,hyrbil,hotel... panelName = flygalternativ...
++		this.panelMap.get(this.currentPanel).get(panelName).setVisible(show);
++	}
++	
++	public Map<String, TreePanel> getOptionTrees(){
++		return this.optionTrees;
++	}
++	
++	public String getCurrentPanel(){
++		return this.currentPanel;
++	}
++	
+ 	public static void main(String[] args){
+-			new MainWindow();
++		MainWindow m = new MainWindow();
+ 	}
+-}
+\ No newline at end of file
++}
+diff --git a/TreePanel.java b/TreePanel.java
+new file mode 100644
+index 0000000..d89d848
+--- /dev/null
++++ b/TreePanel.java
+@@ -0,0 +1,171 @@
++import java.awt.CardLayout;
++import java.awt.Color;
++import java.awt.Dimension;
++import java.awt.Insets;
++import java.awt.event.ActionEvent;
++import java.awt.event.ActionListener;
++import java.awt.image.BufferedImage;
++import java.io.File;
++import java.io.IOException;
++import java.util.LinkedList;
++import java.util.List;
++
++import javax.imageio.ImageIO;
++import javax.swing.BorderFactory;
++import javax.swing.Box;
++import javax.swing.BoxLayout;
++import javax.swing.JButton;
++import javax.swing.JPanel;
++
++
++public class TreePanel extends ImagePanel implements ActionListener{
++	private static final long serialVersionUID = 1L;
++	private List<JPanel> rightList = new LinkedList<JPanel>();
++	private List<JPanel> leftList = new LinkedList<JPanel>();
++	
++	private int numButtons = 5;
++	
++	private JButton[] rightButtons;
++	private JButton[] leftButtons;
++	// Check this array to determine when the order can be put in the cart.
++	private int[] buttonUses;
++	
++	private static int buttonNotDoneValue = 0; 
++	private static int buttonDoneValue = 1;
++	
++	private JPanel leftPanel = new JPanel();
++	private ImagePanel centerPanel = new ImagePanel(loadImage("t3.jpg"));
++	private JPanel rightPanel = new JPanel();
++	private MainWindow parent;
++	
++	private static Color buttonDoneColor = Color.green;
++	private static Color buttonNotDoneColor = Color.gray;
++
++	public TreePanel(MainWindow parent, BufferedImage img, String[] buttonNames) {
++		super(img);
++		
++		this.parent = parent;
++		
++		this.numButtons = buttonNames.length;
++		
++		rightButtons = new JButton[numButtons];
++		leftButtons = new JButton[numButtons];
++		buttonUses = new int[numButtons];
++		
++		for(int n = 0; n < this.numButtons; n++){
++			this.rightButtons[n] = new JButton(buttonNames[n]);
++			this.rightButtons[n].setMargin(new Insets(0,0,0,0));
++			this.leftButtons[n] = new JButton(buttonNames[n]);
++			this.leftButtons[n].setMargin(new Insets(0,0,0,0));
++			this.buttonUses[n] = buttonNotDoneValue;
++		}
++		
++		this.setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
++		
++		this.addPanels();
++		this.drawTreeButtons();
++	}
++	
++	private static BufferedImage loadImage(String fileName){
++		try {
++			return ImageIO.read(new File(fileName));
++		} catch (IOException e) {
++			e.printStackTrace();
++			return null;
++		}
++	}
++	
++	private void addPanels(){
++		Box box = Box.createHorizontalBox();
++		box.add(leftPanel);
++		centerPanel.setPreferredSize(new Dimension(centerPanel.getImage().getWidth(), centerPanel.getImage().getHeight()));
++		centerPanel.setBorder(BorderFactory.createLineBorder(Color.blue));
++		box.add(centerPanel);
++		box.add(rightPanel);
++		this.add(box);
++	}
++	
++	private void drawTreeButtons(){
++		Box leftBox = Box.createVerticalBox();
++		Box rightBox = Box.createVerticalBox();
++		for(int n = 0; n < this.numButtons; n++){
++			JButton left = this.leftButtons[n]; // key is left (in-use)
++			JButton right = this.rightButtons[n]; // value is right (unused)
++			left.setPreferredSize(new Dimension(100, 20));
++			right.setPreferredSize(new Dimension(100, 20));
++			
++			JPanel p1 = new JPanel(new CardLayout());
++			leftList.add(p1);
++			left.addActionListener(this);
++			p1.add(left, "visible");
++			p1.add(Box.createRigidArea(left.getSize()), "invisible");
++			leftBox.add(p1);
++			leftBox.add(Box.createVerticalStrut(20));
++			
++			JPanel p2 = new JPanel(new CardLayout());
++			rightList.add(p2);
++			right.addActionListener(this);
++			p2.add(right, "visible");
++			p2.add(Box.createRigidArea(right.getSize()), "invisible");
++			rightBox.add(p2);
++			rightBox.add(Box.createVerticalStrut(20));
++		}
++		this.leftPanel.add(leftBox);
++		this.rightPanel.add(rightBox);
++		for(JPanel p : leftList){
++			((CardLayout)p.getLayout()).show(p, "invisible");
++		}
++	}
++
++	@Override
++	public void actionPerformed(ActionEvent ae) {
++		for(int n = 0; n < this.numButtons; n++){
++			JButton left = this.leftButtons[n];
++			JButton right = this.rightButtons[n];
++			if(ae.getSource().equals(left)){
++				switchButtons(n);
++				this.parent.showOptionPanel(left.getText(), false);
++			}else if(ae.getSource().equals(right)){
++				switchButtons(n);
++				this.parent.showOptionPanel(left.getText(), true);
++			}
++		}
++	}
++	
++	public void setButtonDone(String buttonName, boolean done){
++		for(int n = 0; n < this.rightButtons.length; n++){
++			if(buttonName.equals(this.rightButtons[n].getText())){
++				if(done){
++					this.rightButtons[n].setBackground(buttonDoneColor);
++					this.buttonUses[n] = buttonDoneValue;
++				}
++				else{
++					this.rightButtons[n].setBackground(buttonNotDoneColor);
++					this.buttonUses[n] = buttonNotDoneValue;
++				}
++				return;
++			}
++		}
++		
++	}
++	
++	private void switchButtons(int n){
++		JPanel pr = this.rightList.get(n);
++		JPanel pl = this.leftList.get(n);
++		((CardLayout)pr.getLayout()).next(pr);
++		((CardLayout)pl.getLayout()).next(pl);
++	}
++	
++	public void switchButtons(String buttonName){
++		for(int n = 0; n < leftButtons.length; n++){
++			if(leftButtons[n].getText().equals(buttonName)){
++				JPanel pr = this.rightList.get(n);
++				JPanel pl = this.leftList.get(n);
++				((CardLayout)pr.getLayout()).next(pr);
++				((CardLayout)pl.getLayout()).next(pl);
++				return;
++			}
++		}
++	}
++	
++}
+\ No newline at end of file
+-- 
+1.7.4.msysgit.0
+

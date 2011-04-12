@@ -22,7 +22,6 @@ public class Kundkorg extends JPanel implements MouseListener{
 	
 	public Kundkorg(){
 		slices = new ArrayList<Slice>();
-		Bokning bok = new Bokning();
 	}
 	
 	public void addBooking(Bokning b){
