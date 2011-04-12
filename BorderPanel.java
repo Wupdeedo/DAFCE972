@@ -15,6 +15,7 @@ public class BorderPanel extends JPanel implements ActionListener{
 	private JButton okButton;
 	private JButton cancelButton;
 	private String title;
+	private AnswerPanel ap;
 	
 	public BorderPanel(MainWindow parent, String title, Component addable){
 		super();
@@ -23,7 +24,33 @@ public class BorderPanel extends JPanel implements ActionListener{
 		this.setBorder(BorderFactory.createTitledBorder(title));
 		this.setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		
-		this.add(addable);
+		if(addable!=null)
+			this.add(addable);
+		
+		cancelButton = new JButton("Cancel");
+		okButton = new JButton("Ok");
+		
+		cancelButton.addActionListener(this);
+		okButton.addActionListener(this);
+		
+		Box b = new Box(BoxLayout.LINE_AXIS);
+		b.add(cancelButton);
+		b.add(Box.createVerticalStrut(50));
+		b.add(okButton);
+		this.add(b);
+		this.setVisible(false);
+	}
+	
+	public BorderPanel(MainWindow parent, String title, Component addable, AnswerPanel ap){
+		super();
+		this.parent = parent;
+		this.title = title;
+		this.ap = ap;
+		this.setBorder(BorderFactory.createTitledBorder(title));
+		this.setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+		
+		if(addable!=null)
+			this.add(addable);
 		
 		cancelButton = new JButton("Cancel");
 		okButton = new JButton("Ok");
@@ -42,13 +69,23 @@ public class BorderPanel extends JPanel implements ActionListener{
 	@Override
 	public void actionPerformed(ActionEvent ae) {
 		if(ae.getSource().equals(this.okButton)){
-			System.out.println(title);
 			this.parent.showOptionPanel(title, false);
 			this.parent.getOptionTrees().get(this.parent.getCurrentPanel()).switchButtons(this.title);
 			this.parent.getOptionTrees().get(this.parent.getCurrentPanel()).setButtonDone(this.title, true);
+			this.parent.getOptionTrees().get(this.parent.getCurrentPanel()).showNextPanel(this.title);
+			if(ap!=null)
+				ap.OkAction(); // TODO
+			/*
+			 * if(this.title.equals("Bekräftelse")){
+			 * 	if(for all optionpanels, panelOK:
+			 * 		kundvagn.add(bokning)
+			 * this.getOptionTrees().get(this.parent.getCurrentPanel().reset()) (set visible(false), create new tree when needed)
+			 */
 		}else if(ae.getSource().equals(this.cancelButton)){
 			this.parent.showOptionPanel(title, false);
 			this.parent.getOptionTrees().get(this.parent.getCurrentPanel()).switchButtons(this.title);
+			if(ap!=null)
+				ap.CancelAction();
 		}
 	}
 }

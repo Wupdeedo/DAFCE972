@@ -1,6 +1,10 @@
+import java.text.NumberFormat;
+
 import javax.swing.BoxLayout;
+import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
 
@@ -23,6 +27,18 @@ public class LabelTextFieldPanel extends JPanel{
 	public LabelTextFieldPanel(String labelText, String startText){
 		this.label = new JLabel(labelText);
 		this.textField = new JTextField(startText);
+		this.init();
+	}
+	
+	public LabelTextFieldPanel(String labelText, boolean pass){
+		this.label = new JLabel(labelText);
+		this.textField = new JPasswordField();
+		this.init();
+	}
+	
+	public LabelTextFieldPanel(String labelText, int format){
+		this.label = new JLabel(labelText);
+		this.textField = new JFormattedTextField(NumberFormat.getInstance());
 		this.init();
 	}
 	
