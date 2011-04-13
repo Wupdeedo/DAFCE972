@@ -30,13 +30,14 @@ public class DatabaseHandle {
 	private PreparedStatement getRooms;
 	private PreparedStatement bookRoom;
 	private PreparedStatement getEventsByLocation;
-	private PreparedStatement getEventSpotsLeft;
 	private PreparedStatement getTotalSpots;
 	private PreparedStatement bookEvent;
 	private PreparedStatement logIn;
 	private PreparedStatement searchWithFilters;
 	private PreparedStatement getCountryByLocation;
 	private PreparedStatement getRoomCount;
+	private PreparedStatement getBookingsByAccount;
+	private PreparedStatement getTotalChairs;
 
 	public DatabaseHandle(){
 		try
@@ -54,68 +55,94 @@ public class DatabaseHandle {
 			//Variant med filter. Har atm stöd för sållning på pris.
 			searchWithFilters = con.prepareStatement("SELECT FlightID, Avgangstid, Ankomsttid, Typ, MIN(Kostnad) AS MinKostnad FROM Flight NATURAL INNER JOIN Flygplan NATURAL INNER JOIN Flygplanstyp NATURAL INNER JOIN Stol WHERE Avgangsdatum = ? AND Avgangsort = (SELECT OrtID FROM Ort WHERE Ort = ?) AND Ankomstort = (SELECT OrtID FROM Ort WHERE Ort = ?) AND Platser > (SELECT COUNT(*) FROM Flightbokning WHERE Flightbokning.FlightID = Flight.FlightID) AND Kostnad > ? AND Kostnad < ? GROUP BY FlightID, Avgangstid, Ankomsttid, Typ");
 			gac = con.prepareStatement("SELECT Typ, COUNT(*) AS Tillg FROM Stol NATURAL INNER JOIN Flight WHERE FlightID = ? AND NOT EXISTS (SELECT FlightID, Nummer FROM Flightbokning WHERE Flight.FlightID = Flightbokning.FlightID AND Stol.Nummer = Flightbokning.Nummer) GROUP BY Typ");
-			gan = con.prepareStatement("SELECT Nummer FROM Stol NATURAL INNER JOIN Flight WHERE FlightID = ? AND Typ = ? AND NOT EXISTS (SELECT * FROM Flightbokning WHERE Flightbokning.Nummer = Stol.Nummer)");
-			createBooking = con.prepareStatement("INSERT INTO TABLE Bokning VALUES (?)");
+			gan = con.prepareStatement("SELECT Nummer FROM Stol NATURAL INNER JOIN Flight WHERE FlightID = ? AND Typ = ?::klass AND NOT EXISTS (SELECT * FROM Flightbokning WHERE Flightbokning.Nummer = Stol.Nummer)");
+			createBooking = con.prepareStatement("INSERT INTO Bokning (KontoID) VALUES (?)");
 			getBookingID = con.prepareStatement("SELECT MAX(BokningsID) AS Max FROM Bokning WHERE KontoID = ?");
-			bookFlightChair = con.prepareStatement("INSERT INTO TABLE Flightbokning VALUES (?, ?, ?)");
-			createAccount = con.prepareStatement("INSERT INTO Konto VALUES (?, decode(md5(?), 'hex'), ?, ?, ?, ?, ?, ?, ?, ?)");
+			bookFlightChair = con.prepareStatement("INSERT INTO Flightbokning VALUES (?, ?, ?)");
+			
+			createAccount = con.prepareStatement("INSERT INTO Konto (Login, Password, Fornamn, Efternamn, Postort, Postnr, email, Adress, Telefon, TaBort) VALUES (?, decode(md5(?), 'hex'), ?, ?, ?, ?, ?, ?, ?, ?)");
+			getBookingsByAccount = con.prepareStatement("SELECT BokningsID FROM Bokning WHERE KontoID = ?");
 			getAccountID = con.prepareStatement("SELECT KontoID FROM Konto WHERE Login = ?");
 			//Stöder sökning av bilar baserat på utlämningsort och de datum bilen skall bokas. Returnerar all relevant information för klassning.
-			getAvailableCars = con.prepareStatement("SELECT BilID, Modell, Tillverkare, Drift, Vaxel, DepotID FROM Bil NATURAL INNER JOIN Bilmodell WHERE NOT EXISTS (SELECT * FROM Bilschema WHERE Bilschema.BilID = Bil.BilID AND (? > Hamtdatum AND ? < Lamningsdatum) AND (? > Hamtdatum AND ? < Lamningsdatum)) AND (SELECT OrtID FROM Ort WHERE Ort = ?) = (SELECT Lamningsplats FROM Bilschema WHERE Lamningsdatum = (SELECT MAX(Lamningsdatum) FROM Bilschema AS a WHERE a.BilID = Bilschema.BilID))");
+			getAvailableCars = con.prepareStatement("SELECT BilID, Modell, Tillverkare, Drift, Vaxel, Lamningsplats AS DepotID FROM Bil NATURAL INNER JOIN Bilmodell NATURAL INNER JOIN Bilschema WHERE NOT EXISTS (SELECT * FROM Bilschema WHERE Bilschema.BilID = Bil.BilID AND ((? > Hamtdatum AND ? < Lamningsdatum) AND (? > Hamtdatum AND ? < Lamningsdatum) OR Hamtdatum BETWEEN ? AND ?)) AND (SELECT OrtID FROM Ort WHERE Ort = ?) = (SELECT OrtID FROM Bilschema  INNER JOIN Depot ON Bilschema.lamningsplats=Depot.DepotID WHERE Lamningsdatum = (SELECT MAX(Lamningsdatum) FROM Bilschema AS a WHERE a.BilID = Bilschema.BilID))");
 			bookCar = con.prepareStatement("INSERT INTO Bilschema VALUES (?, ?, ?, ?, ?, ?)");
-			getDepots = con.prepareStatement("SELECT DepotID FROm Depot NATURAL INNER JOIN Ort WHERE Ort = ?");
+			getDepots = con.prepareStatement("SELECT DepotID FROM Depot NATURAL INNER JOIN Ort WHERE Ort = ?");
+			
 			//Hämtar alla hotell som har minst ett rum ledigt.
-			getAvailableHotels = con.prepareStatement("SELECT HotellID, Namn, Ort, Stjarnor, Beskrivning, MIN(Kostnad) FROM Hotell NATURAL INNER JOIN Rum NATURAL INNER JOIN Ort WHERE Ort = ? AND EXISTS (SELECT RumsID FROM Rum WHERE Rum.HotellID = Hotell.HotellID MINUS SELECT RumsID FROM Rumsschema WHERE (? > Frandatum AND ? < Tilldatum) AND (? > Frandatum AND ? < Tilldatum))");
+			getAvailableHotels = con.prepareStatement("SELECT HotellID, Namn, Ort, Stjarnor, Beskrivning, MIN(Kostnad) AS Minkostnad FROM Hotell NATURAL INNER JOIN Rum NATURAL INNER JOIN Ort WHERE Ort = ? AND EXISTS (SELECT RumsID FROM Rum AS r WHERE r.HotellID = Hotell.HotellID EXCEPT (SELECT RumsID FROM Rumsschema WHERE (? > Frandatum AND ? < Tilldatum) OR (? > Frandatum AND ? < Tilldatum) OR Frandatum BETWEEN ? AND ?)) GROUP BY HotellID, Namn, Ort, Stjarnor, Beskrivning");
+			
 			//Hämtar alla rum vid ett givet hotell som är lediga under den angivna tiden. Kan kombineras med föregående query för att få stöd för bokning av flera rum.
-			getRooms = con.prepareStatement("SELECT RumsID FROM Rum WHERE HotellID = ? EXCEPT SELECT RumsID FROM Rumsschema WHERE (? > Frandatum AND ? < Tilldatum) AND (? > Frandatum AND ? < Tilldatum)");
-			getRoomCount = con.prepareStatement("SELECT COUNT(RumsID) AS AntalRum FROM Rum WHERE HotellID = ? EXCEPT SELECT RumsID FROM Rumsschema WHERE (? > Frandatum AND ? < Tilldatum) AND (? > Frandatum AND ? < Tilldatum)");
+			getRooms = con.prepareStatement("SELECT RumsID FROM Rum WHERE HotellID = ? EXCEPT (SELECT RumsID FROM Rumsschema WHERE (? > Frandatum AND ? < Tilldatum) OR (? > Frandatum AND ? < Tilldatum) OR Frandatum BETWEEN ? AND ?)");
+			getRoomCount = con.prepareStatement("SELECT (COUNT(RumsID)- (SELECT COUNT(RumsID) FROM Rumsschema WHERE (? > Frandatum AND ? < Tilldatum) OR (? > Frandatum AND ? < Tilldatum) OR Frandatum BETWEEN ? AND ?)) AS AntalRum FROM Rum WHERE HotellID = ?");
 			bookRoom = con.prepareStatement("INSERT INTO Rumsschema VALUES (?,?,?,?)");
 			//Stöder sökning av events baserat på ort samt en datumrange.
-			getEventsByLocation = con.prepareStatement("SELECT EvenemangsID, Namn, Startdatum, Slutdatum, Starttid, Sluttid, Beskrivning, PlatsNamn, Kostnad FROM Evenemang NATURAL INNER JOIN Platser NATURAL INNER JOIN Ort WHERE Ort = ? AND Startdatum BETWEEN ? AND ? AND AntalPlatser > (SELECT SUM(Antal) FROM Evenemangschema WHERE Evenemang.EvenemangsID=Evenemangsschema.EvenemangsID)");
-			getEventSpotsLeft = con.prepareStatement("SELECT SUM(Antal) AS Sum FROM Evenemangschema WHERE EvenemangsID = ?");
-			getTotalSpots = con.prepareStatement("Select Antalplatser FROM Evenemang WHERE EvenemangsID = ?");
+			getEventsByLocation = con.prepareStatement("SELECT EvenemangsID, Namn, Startdatum, Slutdatum, Starttid, Sluttid, Beskrivning, PlatsNamn, Kostnad FROM Evenemang NATURAL INNER JOIN Platser NATURAL INNER JOIN Ort WHERE Ort = ? AND Startdatum BETWEEN ? AND ? AND AntalPlatser > (SELECT COALESCE(SUM(Antal), 0) FROM Evenemangsschema WHERE Evenemang.EvenemangsID=Evenemangsschema.EvenemangsID)");
+			getTotalSpots = con.prepareStatement("SELECT (Antalplatser::int - (SELECT COALESCE(SUM(Antal), 0)::int FROM Evenemangsschema WHERE EvenemangsID = ?)) AS Sum FROM Evenemang WHERE EvenemangsID = ?");
 			bookEvent = con.prepareStatement("INSERT INTO Evenemangsschema VALUES (?, ?, ?)");
-			logIn = con.prepareStatement("SELECT KontoID, BokningsID FROM Konto NATURAL INNER JOIN Bokning WHERE Login=? AND Password=decode(md5(?), 'hex');");
+			logIn = con.prepareStatement("SELECT KontoID FROM Konto WHERE Login=? AND Password=decode(md5(?), 'hex');");
 			getCountryByLocation = con.prepareStatement("SELECT LandsID, Land, Information FROM Landsinfo NATURAL INNER JOIN Ort WHERE Ort = ?");
 
+			getTotalChairs = con.prepareStatement("SELECT Typ, COUNT(*) AS Antal FROM Stol NATURAL INNER JOIN Flight WHERE FlightID = ? GROUP BY Typ");
+			
 		}
 		catch (Exception e)
 		{
 			e.printStackTrace();
 		}
 	}
+	
+	
+	
+	//Validated
+	public LinkedList<Integer> getBookingsByAccount(int kontoID) throws SQLException{
+		getBookingsByAccount.setInt(1, kontoID);
+		ResultSet rs = getBookingsByAccount.executeQuery();
+		LinkedList<Integer> res = new LinkedList<Integer>();
+		while(rs.next()){
+			res.add(rs.getInt("BokningsID"));
+		}
+		return res;
+	}
 
 	public void close() throws SQLException{
 		con.close();
 	}
 
+	//Validated
 	public int getRoomCount(int hotellID, Date fran, Date till) throws SQLException{
-		getRoomCount.setInt(1, hotellID);
+		getRoomCount.setInt(7, hotellID);
+		getRoomCount.setDate(1, new java.sql.Date(fran.getTime()));
 		getRoomCount.setDate(2, new java.sql.Date(fran.getTime()));
-		getRoomCount.setDate(3, new java.sql.Date(fran.getTime()));
+		getRoomCount.setDate(3, new java.sql.Date(till.getTime()));
 		getRoomCount.setDate(4, new java.sql.Date(till.getTime()));
-		getRoomCount.setDate(5, new java.sql.Date(till.getTime()));
-		ResultSet rs = getRooms.executeQuery();
+		getRoomCount.setDate(5, new java.sql.Date(fran.getTime()));
+		getRoomCount.setDate(6, new java.sql.Date(till.getTime()));
+		ResultSet rs = getRoomCount.executeQuery();
 		rs.next();
 		return rs.getInt("AntalRum");
 
 	}
 
+	//Validated
 	public ResultSet getCountryByLocation(String ort) throws SQLException{
 		getCountryByLocation.setString(1, ort);
 		return getCountryByLocation.executeQuery();
 
 	}
 
-	public ResultSet logIn(String user, String pass) throws SQLException{
+	//Validated
+	public long logIn(String user, String pass) throws SQLException{
 		logIn.setString(1, user);
-		logIn.setString(1, pass);
+		logIn.setString(2, pass);
 		ResultSet rs = logIn.executeQuery();
-		if(!rs.next()) return null;
-		rs.previous();
-		return rs;
+		if(!rs.next()) return -1;
+		return rs.getLong("KontoID");
 	}
-
+	
+	
+	
+	
+	//Validated
 	public void bookEvent(int evenemangsID, long bokningsID, int antal) throws SQLException{
 		bookEvent.setInt(1, evenemangsID);
 		bookEvent.setLong(2, bokningsID);
@@ -124,31 +151,33 @@ public class DatabaseHandle {
 
 	}
 
+	//Validated
 	public int spotsLeft(int eventID) throws SQLException{
-		getEventSpotsLeft.setInt(1, eventID);
-		ResultSet rs = getEventSpotsLeft.executeQuery();
-		rs.next();
-		int spotsTaken = rs.getInt("Sum");
 		getTotalSpots.setInt(1, eventID);
-		rs = getTotalSpots.executeQuery();
+		getTotalSpots.setInt(2, eventID);
+		ResultSet rs = getTotalSpots.executeQuery();
 		rs.next();
-		return rs.getInt("Antalplatser") - spotsTaken;
+		return rs.getInt("Sum");
 
 	}
 
+	//Validated
 	public ResultSet getEventsByLocation(String ort, Date startdatum, Date slutdatum) throws SQLException{
 		getEventsByLocation.setString(1, ort);
 		getEventsByLocation.setDate(2, new java.sql.Date(startdatum.getTime()));
-		getEventsByLocation.setDate(2, new java.sql.Date(slutdatum.getTime()));
+		getEventsByLocation.setDate(3, new java.sql.Date(slutdatum.getTime()));
 		return getEventsByLocation.executeQuery();
 	}
 
+	//Validated
 	public void bookRoom(long bokningsID, int hotellID, Date fran, Date till) throws SQLException{
 		getRooms.setInt(1, hotellID);
 		getRooms.setDate(2, new java.sql.Date(fran.getTime()));
 		getRooms.setDate(3, new java.sql.Date(fran.getTime()));
 		getRooms.setDate(4, new java.sql.Date(till.getTime()));
 		getRooms.setDate(5, new java.sql.Date(till.getTime()));
+		getRooms.setDate(6, new java.sql.Date(fran.getTime()));
+		getRooms.setDate(7, new java.sql.Date(till.getTime()));
 		ResultSet rs = getRooms.executeQuery();
 		rs.next();
 		bookRoom.setLong(1, bokningsID);
@@ -158,16 +187,20 @@ public class DatabaseHandle {
 		bookRoom.executeUpdate();
 	}
 
+	//Validated
 	public ResultSet getAvailableHotels(String ort, Date fran, Date till) throws SQLException{
 		getAvailableHotels.setString(1, ort);
 		getAvailableHotels.setDate(2, new java.sql.Date(fran.getTime()));
 		getAvailableHotels.setDate(3, new java.sql.Date(fran.getTime()));
 		getAvailableHotels.setDate(4, new java.sql.Date(till.getTime()));
 		getAvailableHotels.setDate(5, new java.sql.Date(till.getTime()));
+		getAvailableHotels.setDate(6, new java.sql.Date(fran.getTime()));
+		getAvailableHotels.setDate(7, new java.sql.Date(till.getTime()));
 		return getAvailableHotels.executeQuery();
 	}
 
-	public void bookCar(int bilID, long bokningsID, Date hamtdatum, Date lamningsdatum, int hamtort, String lamningsort) throws SQLException{
+	//Validated
+	public void bookCar(int bilID, long bokningsID, Date hamtdatum, Date lamningsdatum, int hamtplats, String lamningsort) throws SQLException{
 		getDepots.setString(1, lamningsort);
 		ResultSet rs = getDepots.executeQuery();
 		rs.next();
@@ -176,26 +209,28 @@ public class DatabaseHandle {
 		bookCar.setLong(2, bokningsID);
 		bookCar.setDate(3, new java.sql.Date(hamtdatum.getTime()));
 		bookCar.setDate(4, new java.sql.Date(lamningsdatum.getTime()));
-		bookCar.setInt(5, hamtort);
+		bookCar.setInt(5, hamtplats);
 		bookCar.setInt(6, depotID);
 		bookCar.executeUpdate();
 
 	}
 
-
+	//Validated
 	public ResultSet getAvailableCars(String ort, Date dat1, Date dat2) throws SQLException{
 		getAvailableCars.setDate(1, new java.sql.Date(dat1.getTime()));
 		getAvailableCars.setDate(2, new java.sql.Date(dat1.getTime()));
 		getAvailableCars.setDate(3, new java.sql.Date(dat2.getTime()));
 		getAvailableCars.setDate(4, new java.sql.Date(dat2.getTime()));
-		getAvailableCars.setString(5, ort);
+		getAvailableCars.setDate(5, new java.sql.Date(dat1.getTime()));
+		getAvailableCars.setDate(6, new java.sql.Date(dat2.getTime()));
+		getAvailableCars.setString(7, ort);
 
 		return getAvailableCars.executeQuery();
 
 	}
 
 
-	//TODO: Change all bigint values to setLong
+	//Validated
 	public int createAccount(String user, String password, String fornamn, String efternamn, String postort, int postnr, String email, String adress, long telefon, Date tabort) throws SQLException{
 		createAccount.setString(1, user);
 		createAccount.setString(2, password);
@@ -216,6 +251,7 @@ public class DatabaseHandle {
 
 	}
 
+	//Validated
 	public int createBooking(int kontoID) throws SQLException{
 		createBooking.setInt(1, kontoID);
 		createBooking.executeUpdate();
@@ -226,6 +262,7 @@ public class DatabaseHandle {
 
 	}
 
+	//Validated
 	public void bookChair(int nummer, int bokningsID, int flightID) throws SQLException{
 		bookFlightChair.setInt(1, flightID);
 		bookFlightChair.setInt(2, bokningsID);
@@ -234,6 +271,7 @@ public class DatabaseHandle {
 
 	}
 
+	//Validated
 	public LinkedList<Integer> getAvailableNumbers(int flightID, String type) throws SQLException{
 		gan.setInt(1, flightID);
 		gan.setString(2, type);
@@ -245,6 +283,7 @@ public class DatabaseHandle {
 		return res;
 	}
 
+	//Validated
 	public HashMap<String, Integer> getAvailableChairs(int flightID) throws SQLException{
 		gac.setInt(1, flightID);
 		ResultSet rs = gac.executeQuery();
@@ -254,17 +293,19 @@ public class DatabaseHandle {
 		}
 		return res;
 	}
-
-	public HashMap<Integer, String> getAvailableChairsbyPlace(int flightID) throws SQLException{
-		gac.setInt(1, flightID);
-		ResultSet rs = gac.executeQuery();
-		HashMap<Integer, String> res = new HashMap<Integer, String>();
+	
+	//Validated
+	public HashMap<String, Integer> getTotalChairs(int flightID) throws SQLException{
+		getTotalChairs.setInt(1, flightID);
+		ResultSet rs = getTotalChairs.executeQuery();
+		HashMap<String, Integer> res = new HashMap<String, Integer>();
 		while(rs.next()){
-			res.put(rs.getInt("Tillg"), rs.getString("Typ"));
+			res.put(rs.getString("Typ"), rs.getInt("Antal"));
 		}
 		return res;
 	}
 
+	//Validated
 	public ResultSet searchFlight(Date avgangsdatumRaw, String avgangsort, String ankomstort) throws SQLException{
 		java.sql.Date avgangsdatum = new java.sql.Date(avgangsdatumRaw.getTime());
 		sf.setDate(1, avgangsdatum);
@@ -273,7 +314,8 @@ public class DatabaseHandle {
 		return sf.executeQuery();
 
 	}
-
+	
+	//Validated
 	public ResultSet searchFlightFilters(Date avgangsdatumRaw, String avgangsort, String ankomstort, int minpris, int maxpris) throws SQLException{
 		java.sql.Date avgangsdatum = new java.sql.Date(avgangsdatumRaw.getTime());
 		searchWithFilters.setDate(1, avgangsdatum);
@@ -286,6 +328,7 @@ public class DatabaseHandle {
 
 	}
 
+	//Validated
 	public LinkedList<DatePrice> fillAlmanack(Date date, String avgang, String ankomst) throws SQLException{
 
 		fa.setString(1, avgang);
@@ -303,6 +346,7 @@ public class DatabaseHandle {
 
 	}
 
+	//Validated
 	public LinkedList<String> getVaccinationByCountry(String country) throws SQLException{
 		vbc.setString(1, country);
 		ResultSet rs = vbc.executeQuery();
