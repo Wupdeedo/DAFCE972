@@ -37,6 +37,7 @@ public class DatabaseHandle {
 	private PreparedStatement searchWithFilters;
 	private PreparedStatement getCountryByLocation;
 	private PreparedStatement getRoomCount;
+	private PreparedStatement getBookingsByAccount;
 
 	public DatabaseHandle(){
 		try
@@ -54,11 +55,13 @@ public class DatabaseHandle {
 			//Variant med filter. Har atm stöd för sållning på pris.
 			searchWithFilters = con.prepareStatement("SELECT FlightID, Avgangstid, Ankomsttid, Typ, MIN(Kostnad) AS MinKostnad FROM Flight NATURAL INNER JOIN Flygplan NATURAL INNER JOIN Flygplanstyp NATURAL INNER JOIN Stol WHERE Avgangsdatum = ? AND Avgangsort = (SELECT OrtID FROM Ort WHERE Ort = ?) AND Ankomstort = (SELECT OrtID FROM Ort WHERE Ort = ?) AND Platser > (SELECT COUNT(*) FROM Flightbokning WHERE Flightbokning.FlightID = Flight.FlightID) AND Kostnad > ? AND Kostnad < ? GROUP BY FlightID, Avgangstid, Ankomsttid, Typ");
 			gac = con.prepareStatement("SELECT Typ, COUNT(*) AS Tillg FROM Stol NATURAL INNER JOIN Flight WHERE FlightID = ? AND NOT EXISTS (SELECT FlightID, Nummer FROM Flightbokning WHERE Flight.FlightID = Flightbokning.FlightID AND Stol.Nummer = Flightbokning.Nummer) GROUP BY Typ");
-			gan = con.prepareStatement("SELECT Nummer FROM Stol NATURAL INNER JOIN Flight WHERE FlightID = ? AND Typ = ? AND NOT EXISTS (SELECT * FROM Flightbokning WHERE Flightbokning.Nummer = Stol.Nummer)");
-			createBooking = con.prepareStatement("INSERT INTO TABLE Bokning VALUES (?)");
+			gan = con.prepareStatement("SELECT Nummer FROM Stol NATURAL INNER JOIN Flight WHERE FlightID = ? AND Typ = ?::klass AND NOT EXISTS (SELECT * FROM Flightbokning WHERE Flightbokning.Nummer = Stol.Nummer)");
+			createBooking = con.prepareStatement("INSERT INTO Bokning (KontoID) VALUES (?)");
 			getBookingID = con.prepareStatement("SELECT MAX(BokningsID) AS Max FROM Bokning WHERE KontoID = ?");
 			bookFlightChair = con.prepareStatement("INSERT INTO TABLE Flightbokning VALUES (?, ?, ?)");
-			createAccount = con.prepareStatement("INSERT INTO Konto VALUES (?, decode(md5(?), 'hex'), ?, ?, ?, ?, ?, ?, ?, ?)");
+			
+			createAccount = con.prepareStatement("INSERT INTO Konto (Login, Password, Fornamn, Efternamn, Postort, Postnr, email, Adress, Telefon, TaBort) VALUES (?, decode(md5(?), 'hex'), ?, ?, ?, ?, ?, ?, ?, ?)");
+			getBookingsByAccount = con.prepareStatement("SELECT BokningsID FROM Bokning WHERE KontoID = ?");
 			getAccountID = con.prepareStatement("SELECT KontoID FROM Konto WHERE Login = ?");
 			//Stöder sökning av bilar baserat på utlämningsort och de datum bilen skall bokas. Returnerar all relevant information för klassning.
 			getAvailableCars = con.prepareStatement("SELECT BilID, Modell, Tillverkare, Drift, Vaxel, DepotID FROM Bil NATURAL INNER JOIN Bilmodell WHERE NOT EXISTS (SELECT * FROM Bilschema WHERE Bilschema.BilID = Bil.BilID AND (? > Hamtdatum AND ? < Lamningsdatum) AND (? > Hamtdatum AND ? < Lamningsdatum)) AND (SELECT OrtID FROM Ort WHERE Ort = ?) = (SELECT Lamningsplats FROM Bilschema WHERE Lamningsdatum = (SELECT MAX(Lamningsdatum) FROM Bilschema AS a WHERE a.BilID = Bilschema.BilID))");
@@ -75,7 +78,7 @@ public class DatabaseHandle {
 			getEventSpotsLeft = con.prepareStatement("SELECT SUM(Antal) AS Sum FROM Evenemangschema WHERE EvenemangsID = ?");
 			getTotalSpots = con.prepareStatement("Select Antalplatser FROM Evenemang WHERE EvenemangsID = ?");
 			bookEvent = con.prepareStatement("INSERT INTO Evenemangsschema VALUES (?, ?, ?)");
-			logIn = con.prepareStatement("SELECT KontoID, BokningsID FROM Konto NATURAL INNER JOIN Bokning WHERE Login=? AND Password=decode(md5(?), 'hex');");
+			logIn = con.prepareStatement("SELECT KontoID FROM Konto WHERE Login=? AND Password=decode(md5(?), 'hex');");
 			getCountryByLocation = con.prepareStatement("SELECT LandsID, Land, Information FROM Landsinfo NATURAL INNER JOIN Ort WHERE Ort = ?");
 
 		}
@@ -83,6 +86,17 @@ public class DatabaseHandle {
 		{
 			e.printStackTrace();
 		}
+	}
+	
+	//Validated
+	public LinkedList<Integer> getBookingsByAccount(int kontoID) throws SQLException{
+		getBookingsByAccount.setInt(1, kontoID);
+		ResultSet rs = getBookingsByAccount.executeQuery();
+		LinkedList<Integer> res = new LinkedList<Integer>();
+		while(rs.next()){
+			res.add(rs.getInt("BokningsID"));
+		}
+		return res;
 	}
 
 	public void close() throws SQLException{
@@ -107,14 +121,18 @@ public class DatabaseHandle {
 
 	}
 
-	public ResultSet logIn(String user, String pass) throws SQLException{
+	//Validated
+	public long logIn(String user, String pass) throws SQLException{
 		logIn.setString(1, user);
-		logIn.setString(1, pass);
+		logIn.setString(2, pass);
 		ResultSet rs = logIn.executeQuery();
-		if(!rs.next()) return null;
-		rs.previous();
-		return rs;
+		if(!rs.next()) return -1;
+		return rs.getLong("KontoID");
 	}
+	
+	
+	
+	
 
 	public void bookEvent(int evenemangsID, long bokningsID, int antal) throws SQLException{
 		bookEvent.setInt(1, evenemangsID);
@@ -195,7 +213,7 @@ public class DatabaseHandle {
 	}
 
 
-	//TODO: Change all bigint values to setLong
+	//Validated
 	public int createAccount(String user, String password, String fornamn, String efternamn, String postort, int postnr, String email, String adress, long telefon, Date tabort) throws SQLException{
 		createAccount.setString(1, user);
 		createAccount.setString(2, password);
@@ -216,6 +234,7 @@ public class DatabaseHandle {
 
 	}
 
+	//Validated
 	public int createBooking(int kontoID) throws SQLException{
 		createBooking.setInt(1, kontoID);
 		createBooking.executeUpdate();
@@ -234,6 +253,7 @@ public class DatabaseHandle {
 
 	}
 
+	//Validated
 	public LinkedList<Integer> getAvailableNumbers(int flightID, String type) throws SQLException{
 		gan.setInt(1, flightID);
 		gan.setString(2, type);
@@ -245,6 +265,7 @@ public class DatabaseHandle {
 		return res;
 	}
 
+	//Validated
 	public HashMap<String, Integer> getAvailableChairs(int flightID) throws SQLException{
 		gac.setInt(1, flightID);
 		ResultSet rs = gac.executeQuery();
@@ -255,16 +276,7 @@ public class DatabaseHandle {
 		return res;
 	}
 
-	public HashMap<Integer, String> getAvailableChairsbyPlace(int flightID) throws SQLException{
-		gac.setInt(1, flightID);
-		ResultSet rs = gac.executeQuery();
-		HashMap<Integer, String> res = new HashMap<Integer, String>();
-		while(rs.next()){
-			res.put(rs.getInt("Tillg"), rs.getString("Typ"));
-		}
-		return res;
-	}
-
+	//Validated
 	public ResultSet searchFlight(Date avgangsdatumRaw, String avgangsort, String ankomstort) throws SQLException{
 		java.sql.Date avgangsdatum = new java.sql.Date(avgangsdatumRaw.getTime());
 		sf.setDate(1, avgangsdatum);
@@ -273,7 +285,8 @@ public class DatabaseHandle {
 		return sf.executeQuery();
 
 	}
-
+	
+	//Validated
 	public ResultSet searchFlightFilters(Date avgangsdatumRaw, String avgangsort, String ankomstort, int minpris, int maxpris) throws SQLException{
 		java.sql.Date avgangsdatum = new java.sql.Date(avgangsdatumRaw.getTime());
 		searchWithFilters.setDate(1, avgangsdatum);
@@ -286,6 +299,7 @@ public class DatabaseHandle {
 
 	}
 
+	//Validated
 	public LinkedList<DatePrice> fillAlmanack(Date date, String avgang, String ankomst) throws SQLException{
 
 		fa.setString(1, avgang);
@@ -303,6 +317,7 @@ public class DatabaseHandle {
 
 	}
 
+	//Validated
 	public LinkedList<String> getVaccinationByCountry(String country) throws SQLException{
 		vbc.setString(1, country);
 		ResultSet rs = vbc.executeQuery();
