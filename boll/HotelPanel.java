@@ -1,8 +1,14 @@
 package boll;
 
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.Locale;
 
+import javax.imageio.ImageIO;
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -28,12 +34,11 @@ class HotelPanel extends JPanel{
 		
 		search = new JButton("Sök");
 		clear = new JButton("Rensa");
-
 		
 		ortlab = new JLabel("Ort: ");
 		nroom = new JLabel("Antal rum: ");
-		fromDat = new JLabel("Utlämningsdatum: ");
-		toDat = new JLabel("Inlämningsdatum: ");
+		fromDat = new JLabel("Incheckningsdatum: ");
+		toDat = new JLabel("Utcheckningsdatum: ");
 		nrpeep = new JLabel("Antal personer: ");
 		
 		ortex = new JTextField();
@@ -60,27 +65,27 @@ class HotelPanel extends JPanel{
 						.addComponent(ortex)
 				)
 				.addGroup(layout.createSequentialGroup()
-						.addContainerGap(200,200)
+						.addContainerGap(232,232)
 						.addComponent(fromDat)
 						.addComponent(dat1)
 				)
 				.addGroup(layout.createSequentialGroup()
-						.addContainerGap(200,200)
+						.addContainerGap(232,232)
 						.addComponent(toDat)
 						.addComponent(dat2)
 				)
 				.addGroup(layout.createSequentialGroup()
-						.addContainerGap(200,200)
+						.addContainerGap(232,232)
 						.addComponent(nroom)
 						.addComponent(nrotex)
 				)
 				.addGroup(layout.createSequentialGroup()
-						.addContainerGap(200,200)
+						.addContainerGap(232,232)
 						.addComponent(nrpeep)
 						.addComponent(nrptex)
 				)
 				.addGroup(layout.createSequentialGroup()
-						.addContainerGap(80,80)
+						.addContainerGap(110,110)
 						.addComponent(clear)
 						.addGap(80)
 						.addComponent(search)
@@ -89,7 +94,7 @@ class HotelPanel extends JPanel{
 		);
 		
 		layout.setVerticalGroup(layout.createSequentialGroup()
-				.addContainerGap(75,75)
+				.addContainerGap(150,150)
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
 					.addComponent(ortlab)
 					.addComponent(ortex)
@@ -120,5 +125,15 @@ class HotelPanel extends JPanel{
 				)
 		);
 	}
-	
+	public void paint(Graphics gr){
+		Graphics2D g = (Graphics2D)gr;
+		BufferedImage img;
+		try {
+			img = ImageIO.read(new File("src/bilder/hotell.png"));
+			g.drawImage(img,0,0,null);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		this.printComponents(gr);
+	}
 }

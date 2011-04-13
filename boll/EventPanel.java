@@ -1,8 +1,15 @@
 package boll;
 
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.Locale;
 
+import javax.imageio.ImageIO;
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -17,7 +24,6 @@ class EventPanel extends JPanel{
 	
 	public JLabel ortlab, datlab;
 	public JTextField ortex;
-	public JCheckBox price;
 	public JDateChooser dat1;// Borrowed from third party lib
 	public JButton search,clear;
 	
@@ -30,10 +36,6 @@ class EventPanel extends JPanel{
 		
 		search = new JButton("Sök");
 		clear = new JButton("Rensa");
-		
-		price = new JCheckBox("<html><font size=4><u>Prisalmanacka</u></font><br>Sök bästa pris runt valda datum.</html>");
-		price.setHorizontalTextPosition(SwingConstants.LEFT);
-
 		ortlab = new JLabel("Ort: ");
 		datlab = new JLabel("Datum:   ");
 		
@@ -47,21 +49,17 @@ class EventPanel extends JPanel{
 		
 		layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
 				.addGroup(layout.createSequentialGroup()
-						.addContainerGap(150,150)
+						.addContainerGap(180,180)
 						.addComponent(ortlab)
 						.addComponent(ortex)
 				)
 				.addGroup(layout.createSequentialGroup()
-						.addContainerGap(150,150)
+						.addContainerGap(180,180)
 						.addComponent(datlab)
 						.addComponent(dat1)
 				)
 				.addGroup(layout.createSequentialGroup()
-						.addContainerGap(220,220)
-						.addComponent(price)
-				)
-				.addGroup(layout.createSequentialGroup()
-						.addContainerGap(80,80)
+						.addContainerGap(200,200)
 						.addComponent(clear)
 						.addGap(80)
 						.addComponent(search)
@@ -70,7 +68,7 @@ class EventPanel extends JPanel{
 		);
 		
 		layout.setVerticalGroup(layout.createSequentialGroup()
-				.addContainerGap(75,75)
+				.addContainerGap(150,150)
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
 					.addComponent(ortlab)
 					.addComponent(ortex)
@@ -81,15 +79,22 @@ class EventPanel extends JPanel{
 					.addComponent(dat1)
 				)
 				.addGap(30)
-				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-					.addComponent(price)
-				)
-				.addGap(200)
+				.addGap(100)
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
 					.addComponent(clear)
 					.addComponent(search)
 				)
 		);
 	}
-	
+	public void paint(Graphics gr){
+		Graphics2D g = (Graphics2D)gr;
+		BufferedImage img;
+		try {
+			img = ImageIO.read(new File("src/bilder/event.png"));
+			g.drawImage(img,0,0,null);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		this.printComponents(gr);
+	}
 }

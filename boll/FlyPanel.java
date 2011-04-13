@@ -1,19 +1,18 @@
 package boll;
-
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.Locale;
 
-import javax.swing.GroupLayout;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
+import javax.imageio.ImageIO;
+import javax.swing.*;
 
 import com.toedter.calendar.JDateChooser;
 
-public class FlyPanel extends JPanel{
+class FlyPanel extends JPanel{
 	
 	public JLabel fromLab, toLab, fromDat, toDat;
 	public JTextField fromTex, toTex;
@@ -28,15 +27,15 @@ public class FlyPanel extends JPanel{
 		
 		Dimension dim = new Dimension(150,20);
 		
-		search = new JButton("Sök");
+		search = new JButton("S√∂k");
 		clear = new JButton("Rensa");
 		
-		price = new JCheckBox("<html><font size=4><u>Prisalmanacka</u></font><br>Sök bästa pris runt valda datum.</html>");
+		price = new JCheckBox("<html><font size=4><u>Prisalmanacka</u></font><br>S√∂k b√§sta pris runt valda datum.</html>");
 		price.setHorizontalTextPosition(SwingConstants.LEFT);
-		filter = new JCheckBox("<html><font size=4><u>Filter</u></font><br>Filtrera sökning efter specifika parametrar.</html>");
+		filter = new JCheckBox("<html><font size=4><u>Filter</u></font><br>Filtrera s√∂kning efter specifika parametrar.</html>");
 		filter.setHorizontalTextPosition(SwingConstants.LEFT);
 		
-		fromLab = new JLabel("Från: ");
+		fromLab = new JLabel("Fr√•n: ");
 		toLab = new JLabel("Till:   ");
 		fromDat = new JLabel("Avresedatum:   ");
 		toDat = new JLabel("Hemkomstdatum: ");
@@ -59,35 +58,35 @@ public class FlyPanel extends JPanel{
 		
 		layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
 				.addGroup(layout.createSequentialGroup()
-						.addContainerGap(100,100)
+						.addContainerGap(110,110)
 						.addComponent(fromLab)
 						.addComponent(fromTex)
 				)
 				.addGroup(layout.createSequentialGroup()
-						.addContainerGap(100,100)
+						.addContainerGap(110,110)
 						.addComponent(toLab)
 						.addComponent(toTex)
 				)
 				.addGroup(layout.createSequentialGroup()
-						.addContainerGap(200,200)
+						.addContainerGap(210,210)
 						.addComponent(fromDat)
 						.addComponent(dat1)
 				)
 				.addGroup(layout.createSequentialGroup()
-						.addContainerGap(200,200)
+						.addContainerGap(210,210)
 						.addComponent(toDat)
 						.addComponent(dat2)
 				)
 				.addGroup(layout.createSequentialGroup()
-						.addContainerGap(220,220)
+						.addContainerGap(230,230)
 						.addComponent(price)
 				)
 				.addGroup(layout.createSequentialGroup()
-						.addContainerGap(200,200)
+						.addContainerGap(210,210)
 						.addComponent(filter)
 				)
 				.addGroup(layout.createSequentialGroup()
-						.addContainerGap(80,80)
+						.addContainerGap(90,90)
 						.addComponent(clear)
 						.addGap(80)
 						.addComponent(search)
@@ -96,7 +95,7 @@ public class FlyPanel extends JPanel{
 		);
 		
 		layout.setVerticalGroup(layout.createSequentialGroup()
-				.addContainerGap(75,75)
+				.addContainerGap(150,150)
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
 					.addComponent(fromLab)
 					.addComponent(fromTex)
@@ -131,5 +130,15 @@ public class FlyPanel extends JPanel{
 				)
 		);
 	}
-	
+	public void paint(Graphics gr){
+		Graphics2D g = (Graphics2D)gr;
+		BufferedImage img;
+		try {
+			img = ImageIO.read(new File("src/bilder/flyg.png"));
+			g.drawImage(img,0,0,null);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		this.printComponents(gr);
+	}
 }

@@ -1,15 +1,15 @@
 package boll;
 
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.Locale;
 
-import javax.swing.GroupLayout;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.imageio.ImageIO;
+import javax.swing.*;
 
 import com.toedter.calendar.JDateChooser;
 
@@ -62,38 +62,38 @@ class CarPanel extends JPanel{
 		carcat.setSelectedIndex(0);
 		carcat.setMaximumSize(dim);
 		
-		layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+		layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
 				.addGroup(layout.createSequentialGroup()
-						.addContainerGap(120,120)
+						.addContainerGap(200,200)
 						.addComponent(fromDat)
 						.addComponent(dat1)
 				)
 				.addGroup(layout.createSequentialGroup()
-						.addContainerGap(120,120)
+						.addContainerGap(200,200)
 						.addComponent(toDat)
 						.addComponent(dat2)
 				)
 				.addGroup(layout.createSequentialGroup()
-						.addContainerGap(200,200)
+						.addContainerGap(232,232)
 						.addComponent(fromLab)
 						.addComponent(fromTex)
 				)
 				.addGroup(layout.createSequentialGroup()
-						.addContainerGap(200,200)
+						.addContainerGap(232,232)
 						.addComponent(toLab)
 						.addComponent(toTex)
-						.addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
+						.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
 							.addComponent(same)
 							.addComponent(samelab)
 						)
 				)
 				.addGroup(layout.createSequentialGroup()
-						.addContainerGap(200,200)
+						.addContainerGap(232,232)
 						.addComponent(carcatlab)
 						.addComponent(carcat)
 				)
 				.addGroup(layout.createSequentialGroup()
-						.addContainerGap(80,80)
+						.addContainerGap(210,210)
 						.addComponent(clear)
 						.addGap(80)
 						.addComponent(search)
@@ -102,7 +102,7 @@ class CarPanel extends JPanel{
 		);
 		
 		layout.setVerticalGroup(layout.createSequentialGroup()
-				.addContainerGap(75,75)
+				.addContainerGap(150,150)
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
 					.addComponent(fromDat)
 					.addComponent(dat1)
@@ -138,5 +138,15 @@ class CarPanel extends JPanel{
 				)
 		);
 	}
-	
+	public void paint(Graphics gr){
+		Graphics2D g = (Graphics2D)gr;
+		BufferedImage img;
+		try {
+			img = ImageIO.read(new File("src/bilder/bil.png"));
+			g.drawImage(img,0,0,null);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		this.printComponents(gr);
+	}
 }
