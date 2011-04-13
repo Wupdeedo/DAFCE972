@@ -1,3 +1,4 @@
+package mainwindow;
 import javax.swing.BoxLayout;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;

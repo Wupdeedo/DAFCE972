@@ -1,3 +1,4 @@
+package mainwindow;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -290,6 +291,16 @@ public class DatabaseHandle {
 		HashMap<String, Integer> res = new HashMap<String, Integer>();
 		while(rs.next()){
 			res.put(rs.getString("Typ"), rs.getInt("Tillg"));
+		}
+		return res;
+	}
+	
+	public HashMap<Integer, String> getAvailableChairsbyPlace(int flightID) throws SQLException{
+		gac.setInt(1, flightID);
+		ResultSet rs = gac.executeQuery();
+		HashMap<Integer, String> res = new HashMap<Integer, String>();
+		while(rs.next()){
+			res.put(rs.getInt("Tillg"), rs.getString("Typ"));
 		}
 		return res;
 	}

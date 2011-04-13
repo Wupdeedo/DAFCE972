@@ -1,4 +1,4 @@
-
+package mainwindow;
 public class LoginData {
 	public static String USER = "joagusta";
 	public static String PASSWORD = "faroflyg";

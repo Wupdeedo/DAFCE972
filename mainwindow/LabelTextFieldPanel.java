@@ -1,3 +1,4 @@
+package mainwindow;
 import java.text.NumberFormat;
 
 import javax.swing.BoxLayout;
