@@ -25,6 +25,10 @@ public class Kundkorg extends JPanel implements MouseListener, ComponentListener
 	}
 	
 	public Kundkorg(){
+		Dimension dim = new Dimension(576,576);
+		this.setMinimumSize(dim);
+		this.setMaximumSize(dim);
+		this.setPreferredSize(dim);
 		slices = new ArrayList<Slice>();
 		FlygBokning fb1 = new FlygBokning();
 		BilBokning fb2 = new BilBokning();
@@ -107,13 +111,17 @@ public class Kundkorg extends JPanel implements MouseListener, ComponentListener
 		Graphics2D g = (Graphics2D) graph;
 		if(slices.size()==0){
 			try {
-				g.drawImage(ImageIO.read(new File("src/bilder/kundkorg.png")),0,0,null);
+				g.drawImage(ImageIO.read(new File("src/bilder/design5_10.png")),0,0,null);
+				sumlab.setVisible(false);
+				sum.setVisible(false);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}else{
 			try {
 				g.drawImage(ImageIO.read(new File("src/bilder/kundkorg.png")),0,0,null);
+				sumlab.setVisible(true);
+				sum.setVisible(true);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

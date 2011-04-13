@@ -66,6 +66,7 @@ public class TreePanel extends ImagePanel implements ActionListener{
 		this.drawTreeButtons();
 	}
 	
+	
 	private static BufferedImage loadImage(String fileName){
 		try {
 			return ImageIO.read(new File(fileName));
@@ -127,6 +128,7 @@ public class TreePanel extends ImagePanel implements ActionListener{
 				this.parent.showOptionPanel(left.getText(), true);
 			}
 		}
+		this.parent.updateSizes();
 		this.parent.repaint();
 	}
 	

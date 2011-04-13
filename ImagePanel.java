@@ -1,4 +1,5 @@
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
 import javax.swing.JPanel;
@@ -12,6 +13,7 @@ public class ImagePanel extends JPanel{
 	boolean rePaint = false;
 	
 	public ImagePanel(BufferedImage img){
+		this.setOpaque(false);
 		this.img = img;
 	}
 	
@@ -40,14 +42,15 @@ public class ImagePanel extends JPanel{
 //		//g.drawImage(this.img3, 0, this.img.getHeight()+this.img2.getHeight(), this.getWidth(), this.getHeight(), arg5)
 //	}
 	
-	public void paint(Graphics g){
+	public void paint(Graphics gr){
+		Graphics2D g = (Graphics2D)gr;
 		g.drawImage(this.img, 0, 0, null);
-		if(rePaint){
-			g.drawImage(this.img, 0, this.img.getHeight(), null);
-			g.drawImage(this.img, 0, this.img.getHeight(), null);
-			g.drawImage(this.img, 0, this.img.getHeight(), null);
-		}
-		this.paintComponents(g);
+//		if(rePaint){
+//			g.drawImage(this.img, 0, this.img.getHeight(), null);
+//			g.drawImage(this.img, 0, this.img.getHeight(), null);
+//			g.drawImage(this.img, 0, this.img.getHeight(), null);
+//		}
+		this.printComponents(gr);
 	}
 	
 	public BufferedImage getImage(){

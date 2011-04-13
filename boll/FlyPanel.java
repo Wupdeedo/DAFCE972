@@ -56,6 +56,7 @@ class FlyPanel extends JPanel{
 		dat2.setMaximumSize(dim);
 		
 		
+		
 		layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
 				.addGroup(layout.createSequentialGroup()
 						.addContainerGap(110,110)

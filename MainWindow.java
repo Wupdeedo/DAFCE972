@@ -26,11 +26,14 @@ import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.GroupLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.SpringLayout;
+
 import boll.Boll;
 
 
@@ -40,24 +43,28 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 	private JScrollPane mainScrollPane = new JScrollPane(mainPanel);
 	private JPanel bannerPanel = new JPanel();
 	private JPanel leftExtraPanel = new JPanel();
-	private JPanel rightExtraPanel = new JPanel();
+	private ImagePanel rightExtraPanel;
 	private JPanel adPanel = new JPanel();
 	private JPanel searchPanel = new JPanel();
 	private JPanel rightUsedPanel = new JPanel();
-	private JPanel loginPanel = new JPanel();
+	private JPanel loginPanel;
 	private JPanel treePanel = new JPanel();
+	private JPanel korgPanel;
 	FlygBokning flygBokning = new FlygBokning();
 	HotellBokning hotellBokning = new HotellBokning();
 	BilBokning bilBokning = new BilBokning();
 	EventBokning eventBokning = new EventBokning();
-	LabelTextFieldPanel user = new LabelTextFieldPanel("Anvï¿½ndare: ");
-	LabelTextFieldPanel pass = new LabelTextFieldPanel("Lï¿½senord: ", true);
+	LabelTextFieldPanel user = new LabelTextFieldPanel("AnvŠndare: ");
+	LabelTextFieldPanel pass = new LabelTextFieldPanel("Lšsenord: ", true);
 	JButton loginButton = new JButton("Logga in");
 	JLabel welcomeLabel = new JLabel();
 	JButton changeBookingButton = new JButton("Ändra bokning");
 	JButton logoutButton = new JButton("Logga ut");
 	DatabaseHandle dbh = new DatabaseHandle(); // TODO create later?
 	private boolean userLoggedIn = false;
+	private Boll boll = new Boll();
+	private Kundkorg kundkorg = new Kundkorg();
+	JPanel kimgPanel;
 	
 	Map<String, Map<String, JPanel>> panelMap = createPanelMap(false, true);
 	
@@ -66,7 +73,7 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 	public final static String hotell = "hotell";
 	public final static String evenemang = "evenemang";
 	
-	private String currentPanel;
+	private String currentPanel = flyg;
 	
 	private Map<String, TreePanel> optionTrees = createOptionTrees();
 	
@@ -75,9 +82,12 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 	public MainWindow(){
 		this.addTrees();
 		this.createSearchPanel();
-		this.setBorders();
-		this.initPanels();
+//		this.setBorders();
+		this.mainScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		this.mainScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		this.initPanels2();
 		
+		//this.setBackground(new Color(0, 116, 14));
 		
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		//this.setSize(1024+30, 768+41); // TODO dimension?
@@ -86,6 +96,7 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 		
 		((CardLayout)searchPanel.getLayout()).show(searchPanel, flyg);
 		this.showSearchOption(flyg);
+		this.updateSizes();
 	}
 	
 	private Map<String, JPanel> createInnerPanelMap(String outerPanel, boolean almanacka, boolean filter){
@@ -124,13 +135,13 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 			// TODO create a list of available seats, taken from the database
 			//FlygAlternativPanel fa = new FlygAlternativPanel(this, 156, 2, l);
 			FlygAlternativPanel fa = new FlygAlternativPanel(this);
-			m.put("FlygAlternativ",  new BorderPanel(this, "FlygAlternativ", fa, fa));
+			m.put("FlygAlt.",  new BorderPanel(this, "FlygAlt.", fa, fa));
 			// ------------------------------------------
 			// TODO take info from the database
 			//JLabel label = new JLabel("<html>Line One<br>Line Two</br></html>");
 			m.put("Info", new BorderPanel(this,"Info", new InfoTreePanel(), "BakÃ¥t", "FramÃ¥t"));
 			BekraftelsePanel bp = new BekraftelsePanel(this);
-			m.put("Bekräftelse", new BorderPanel(this, "Bekräftelse", bp, bp));
+			m.put("Bekr.", new BorderPanel(this, "Bekr.", bp, bp));
 			return m;
 		}else if(outerPanel.equals(hotell)){
 			// TODO HotellResultatPanel br = new HotellResultatPanel(this, );
@@ -280,7 +291,7 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 		c.gridwidth = 6;
 		
 		try {
-			rightUsedPanel = new ImagePanel(ImageIO.read(new File("src/bilder/design4_06.png")));
+			rightUsedPanel = new ImagePanel(ImageIO.read(new File("src/bilder/design5_06.png")));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -295,6 +306,133 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 		this.user.getTextField().setColumns(6);
 		p.add(this.pass);
 		p.add(Box.createVerticalStrut(10));
+		p.setOpaque(false);
+		this.pass.getTextField().setColumns(6);
+		loginButton.addActionListener(this);
+		p.add(this.loginButton);
+		p.add(Box.createVerticalStrut(500));
+		// TODO add actionlistener to the loginbutton to be able to log in.
+		
+		JPanel p2 = new JPanel();
+		p2.setLayout(new BoxLayout(p2, BoxLayout.PAGE_AXIS));
+		p2.setOpaque(false);
+		this.changeBookingButton.addActionListener(this);
+		this.logoutButton.addActionListener(this);
+
+		p2.add(this.welcomeLabel);
+		p2.add(this.changeBookingButton);
+		p2.add(this.logoutButton);
+		p2.add(Box.createVerticalStrut(500));
+		
+		try {
+			loginPanel = new ImagePanel(ImageIO.read(new File("src/bilder/design5_06.png")));
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		loginPanel.setLayout(new CardLayout());
+		// TODO add the 'inlogged' version of loginPanel
+		loginPanel.add(p, "loggedout");
+		loginPanel.add(p2, "loggedin");
+		loginPanel.setVisible(true);	
+		
+		rightUsedPanel.add(loginPanel);
+		treePanel.setVisible(true); // TODO false
+		rightUsedPanel.add(treePanel);
+		//rightUsedPanel.setPreferredSize(new Dimension(32*6,768-32*6));
+//		mainPanel.add(rightUsedPanel,c);
+		
+		c.gridy = 0;
+		c.gridx = 31;
+		c.gridheight = 64;
+		c.gridwidth = 1;
+		try {
+			rightExtraPanel = new ImagePanel(ImageIO.read(new File("src/bilder/design4_03.png")), true);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		rightExtraPanel.setPreferredSize(new Dimension(32*1,768));
+		
+//		mainPanel.add(rightExtraPanel,c);
+		
+		this.mainScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		this.mainScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		this.add(this.mainScrollPane);
+	}
+	
+	
+	private void initPanels2(){
+		SpringLayout layout = new SpringLayout();
+		mainPanel.setLayout(layout);
+
+		
+		//mainPanel.setLayout(null);
+		
+		/**
+		 * Units of 32 pixels - gridwidth = 3 -> height in pixels = 96. (if the dimensions are 1024x768)
+		 */
+		
+		try {
+			leftExtraPanel = new ImagePanel(ImageIO.read(new File("src/bilder/design4_01.png")), true);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		leftExtraPanel.setPreferredSize(new Dimension(32*1,768));
+
+		
+		
+		try {
+			bannerPanel = new ImagePanel(ImageIO.read(new File("src/bilder/design4_02.png")));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		bannerPanel.setPreferredSize(new Dimension(32*30,32*6));
+
+		
+		
+		try {
+			adPanel = new ImagePanel(ImageIO.read(new File("src/bilder/design4_04.png")));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		adPanel.setPreferredSize(new Dimension(32*6,768-32*6));
+		
+		//c.fill = GridBagConstraints.BOTH;
+		//TODO add some content to the searchPanel so that it expands correctly
+		//searchPanel.setPreferredSize(new Dimension(32*18,768-32*6));
+		this.searchPanel.addComponentListener(this);
+
+		try {
+			rightUsedPanel = new ImagePanel(ImageIO.read(new File("src/bilder/design5_06.png")));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		//rightUsedPanel.setLayout(new BoxLayout(this.rightUsedPanel, BoxLayout.PAGE_AXIS));
+		rightUsedPanel.setLayout(new BoxLayout(rightUsedPanel, BoxLayout.PAGE_AXIS));
+		
+		JPanel p = new JPanel();
+		try {
+			p = new ImagePanel(ImageIO.read(new File("src/bilder/design5_06.png")));
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		p.setLayout(new BoxLayout(p, BoxLayout.PAGE_AXIS));
+		p.add(Box.createVerticalStrut(30));
+		p.add(this.user);
+		this.user.setOpaque(false);
+		this.user.setMaximumSize(new Dimension(185, 20));
+		p.add(Box.createVerticalStrut(10));
+		this.user.getTextField().setColumns(6);
+		p.add(this.pass);
+		p.add(Box.createVerticalStrut(10));
+		this.pass.setOpaque(false);
+		this.pass.setMaximumSize(new Dimension(185, 20));
 		this.pass.getTextField().setColumns(6);
 		loginButton.addActionListener(this);
 		p.add(this.loginButton);
@@ -311,22 +449,38 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 		p2.add(this.logoutButton);
 		p2.add(Box.createVerticalStrut(500));
 		
+		try {
+			loginPanel = new ImagePanel(ImageIO.read(new File("src/bilder/design5_06.png")));
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		loginPanel.setLayout(new CardLayout());
 		// TODO add the 'inlogged' version of loginPanel
 		loginPanel.add(p, "loggedout");
 		loginPanel.add(p2, "loggedin");
+		loginPanel.setOpaque(false);
 		loginPanel.setVisible(true);	
 		
 		rightUsedPanel.add(loginPanel);
 		treePanel.setVisible(true); // TODO false
+		treePanel.setOpaque(false);
 		rightUsedPanel.add(treePanel);
+		try {
+			kimgPanel = new ImagePanel(ImageIO.read(new File("src/bilder/design4_11.png")));
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		korgPanel = new JPanel();
+		korgPanel.setLayout(new BoxLayout(korgPanel, BoxLayout.LINE_AXIS));
+		korgPanel.add(this.kundkorg);
+		korgPanel.add(this.kimgPanel);
+		korgPanel.setPreferredSize(new Dimension(576+192, 576));
+		korgPanel.setMinimumSize(new Dimension(576+192, 576));
+		korgPanel.setMaximumSize(new Dimension(576+192, 576));
 		//rightUsedPanel.setPreferredSize(new Dimension(32*6,768-32*6));
-		mainPanel.add(rightUsedPanel,c);
 		
-		c.gridy = 0;
-		c.gridx = 31;
-		c.gridheight = 64;
-		c.gridwidth = 1;
 		try {
 			rightExtraPanel = new ImagePanel(ImageIO.read(new File("src/bilder/design4_03.png")), true);
 		} catch (IOException e) {
@@ -335,13 +489,53 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 		}
 		rightExtraPanel.setPreferredSize(new Dimension(32*1,768));
 		
-		mainPanel.add(rightExtraPanel,c);
 		
-		this.mainScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		mainPanel.add(adPanel);
+		mainPanel.add(bannerPanel);
+		mainPanel.add(leftExtraPanel);
+		mainPanel.add(rightExtraPanel);
+		mainPanel.add(rightUsedPanel);
+		mainPanel.add(searchPanel);
+		mainPanel.add(this.boll);
+		mainPanel.add(korgPanel);
+		
+		
+		layout.putConstraint(SpringLayout.WEST, leftExtraPanel, 0, SpringLayout.WEST, mainPanel);
+		
+		layout.putConstraint(SpringLayout.NORTH, bannerPanel, 0, SpringLayout.NORTH, mainPanel);
+		layout.putConstraint(SpringLayout.WEST, bannerPanel, 0, SpringLayout.EAST, leftExtraPanel);
+//		layout.putConstraint(SpringLayout.SOUTH, bannerPanel, 0, SpringLayout.NORTH, adPanel);
+		
+//		layout.putConstraint(SpringLayout.EAST, rightExtraPanel, 0, SpringLayout.EAST, mainPanel);
+		layout.putConstraint(SpringLayout.WEST, rightExtraPanel, 0, SpringLayout.EAST, bannerPanel);
+		
+		layout.putConstraint(SpringLayout.WEST, adPanel, 0, SpringLayout.EAST, leftExtraPanel);
+		layout.putConstraint(SpringLayout.NORTH, adPanel, 0, SpringLayout.SOUTH, bannerPanel);
+		
+		layout.putConstraint(SpringLayout.WEST, boll, 0, SpringLayout.EAST, adPanel);
+		layout.putConstraint(SpringLayout.NORTH, boll, 0, SpringLayout.SOUTH, bannerPanel);
+		
+		layout.putConstraint(SpringLayout.NORTH, searchPanel, 0, SpringLayout.SOUTH, boll);
+		layout.putConstraint(SpringLayout.WEST, searchPanel, 0, SpringLayout.EAST, adPanel);
+//		
+		layout.putConstraint(SpringLayout.NORTH, korgPanel, 0, SpringLayout.SOUTH, searchPanel);
+		layout.putConstraint(SpringLayout.WEST, korgPanel, 0, SpringLayout.EAST, adPanel);
+//		layout.putConstraint(SpringLayout.NORTH, korgPanel, 0, SpringLayout.SOUTH, rightUsedPanel);
+		
+//		layout.putConstraint(SpringLayout.WEST, rightUsedPanel, 0, SpringLayout.EAST, boll);
+		layout.putConstraint(SpringLayout.WEST, rightUsedPanel, 0, SpringLayout.EAST, searchPanel);
+//		layout.putConstraint(SpringLayout.WEST, rightUsedPanel, 0, SpringLayout.EAST, kundkorg);
+		layout.putConstraint(SpringLayout.NORTH, rightUsedPanel, 0, SpringLayout.SOUTH, bannerPanel);
+		layout.putConstraint(SpringLayout.EAST, rightUsedPanel, 0, SpringLayout.WEST, rightExtraPanel);
+		
+		
+		
+		
 		this.add(this.mainScrollPane);
 		this.updateSizes();
-		repaint();
 	}
+	
+	
 	
 	private void createSearchPanel(){
 		this.searchPanel.setLayout(new CardLayout());
@@ -349,8 +543,6 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 			JPanel p = new JPanel();
 			p.setLayout(new BoxLayout(p, BoxLayout.PAGE_AXIS));
 			// TODO add search-circles
-			
-			p.add(new Boll());
 			
 			for(Entry<String, JPanel> e : this.panelMap.get(s).entrySet()){
 				p.add(e.getValue());
@@ -485,6 +677,7 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 	public void actionPerformed(ActionEvent e) {
 		// TODO Auto-generated method stub
 		if(e.getSource().equals(this.loginButton)){
+			//this.updateSizes();
 			// TODO if(this.dbh.LOGIN!?? this.user.getTextField().getText());
 					//this.welcomeLabel.setText("Welcome " + this.user.getTextField().getText());
 					//((CardLayout)this.loginPanel.getLayout()).next(loginPanel);
@@ -523,84 +716,110 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 			this.mainScrollPane.getVerticalScrollBar().setValue(this.mainScrollPane.getVerticalScrollBar().getMaximum());
 			// TODO Change here to make the scrollpane work differently when panels are shown/hidden.
 		}*/
+		this.updateSizes();
 	}
 
 	@Override
 	public void componentShown(ComponentEvent arg0) {
 	}
-	public void paint(Graphics g){
-		this.updateSizes();
-		super.paint(g);
-	}
+	
 	
 	void updateSizes(){
 		System.out.println("Update");
 		double h,w;
+		int c;
 		LayoutManager l;
+		
+		c = (this.getWidth()/2)-512;
+		
 		
 		l = bannerPanel.getLayout();
 		l.layoutContainer(bannerPanel);
-		h = l.preferredLayoutSize(bannerPanel).getHeight();
+		h = 192;
 		w = 960;
-		//bannerPanel.setBounds(32, 0, (int)w, (int)h);
+		//bannerPanel.setBounds(c+32, 0, (int)w, (int)h);
 		bannerPanel.setPreferredSize(new Dimension((int)w, (int)h));
-		bannerPanel.setMinimumSize(new Dimension((int)w, (int)h));
-		
-		l = leftExtraPanel.getLayout();
-		l.layoutContainer(leftExtraPanel);
-		h = l.preferredLayoutSize(leftExtraPanel).getHeight();
-		w = 32;
-		//leftExtraPanel.setBounds(0, 0, (int)w, (int)h);
-		leftExtraPanel.setPreferredSize(new Dimension((int)w, (int)h));
-		leftExtraPanel.setMinimumSize(new Dimension((int)w, (int)h));
-		
-		
-		l = rightExtraPanel.getLayout();
-		l.layoutContainer(rightExtraPanel);
-		h = l.preferredLayoutSize(rightExtraPanel).getHeight();
-		w = 32;
-		//rightExtraPanel.setBounds(992, 0, (int)w, (int)h);
-		rightExtraPanel.setPreferredSize(new Dimension((int)w, (int)h));
-		rightExtraPanel.setMinimumSize(new Dimension((int)w, (int)h));
-		
-		l = adPanel.getLayout();
-		l.layoutContainer(adPanel);
-		h = l.preferredLayoutSize(adPanel).getHeight();
-		w = 192;
-		//adPanel.setBounds(32, 192, (int)w, (int)h);
-		adPanel.setPreferredSize(new Dimension((int)w, (int)h));
-		adPanel.setMinimumSize(new Dimension((int)w, (int)h));
+		//bannerPanel.setMinimumSize(new Dimension((int)w, (int)h));
 		
 		l = searchPanel.getLayout();
 		l.layoutContainer(searchPanel);
 		h = l.preferredLayoutSize(searchPanel).getHeight();
 		w = 576;
-		//searchPanel.setBounds(224, 192, (int)w, (int)h);
+		//searchPanel.setBounds(c+224, 192, (int)w, (int)h);
 		searchPanel.setPreferredSize(new Dimension((int)w, (int)h));
-		searchPanel.setMinimumSize(new Dimension((int)w, (int)h));
+		//searchPanel.setMinimumSize(new Dimension((int)w, (int)h));
+		
+		l = leftExtraPanel.getLayout();
+		l.layoutContainer(leftExtraPanel);
+		h = this.bannerPanel.getHeight()+this.searchPanel.getHeight();
+		w = 32;
+		//leftExtraPanel.setBounds(c+0, 0, (int)w, (int)h);
+		leftExtraPanel.setPreferredSize(new Dimension((int)w, (int)h));
+		//leftExtraPanel.setMinimumSize(new Dimension((int)w, (int)h));
+		
+		
+		l = rightExtraPanel.getLayout();
+		l.layoutContainer(rightExtraPanel);
+		h = this.bannerPanel.getHeight()+this.searchPanel.getHeight();
+		w = 32;
+		//rightExtraPanel.setBounds(c+992, 0, (int)w, (int)h);
+		rightExtraPanel.setPreferredSize(new Dimension((int)w, (int)h));
+		//rightExtraPanel.setMinimumSize(new Dimension((int)w, (int)h));
+		
+		l = adPanel.getLayout();
+		l.layoutContainer(adPanel);
+		//h = this.searchPanel.getHeight();
+		h =2000;
+		w = 192;
+		//adPanel.setBounds(c+32, 192, (int)w, (int)h);
+		adPanel.setPreferredSize(new Dimension((int)w, (int)h));
+		//adPanel.setMinimumSize(new Dimension((int)w, (int)h));
+		
+		
 		
 		l = rightUsedPanel.getLayout();
 		l.layoutContainer(rightUsedPanel);
-		h = l.preferredLayoutSize(rightUsedPanel).getHeight();
+		h = 1500;
 		w = 192;
-		//rightUsedPanel.setBounds(736, 192, (int)w, (int)h);
+		//rightUsedPanel.setBounds(c+800, 192, (int)w, (int)h);
 		rightUsedPanel.setPreferredSize(new Dimension((int)w, (int)h));
-		rightUsedPanel.setMinimumSize(new Dimension((int)w, (int)h));
+		//rightUsedPanel.setMinimumSize(new Dimension((int)w, (int)h));
 		
 		l = loginPanel.getLayout();
 		l.layoutContainer(loginPanel);
-		h = l.preferredLayoutSize(loginPanel).getHeight();
+		h = 576;
 		w = 192;
-		//loginPanel.setBounds(736, 192, (int)w, (int)h);
-		loginPanel.setPreferredSize(new Dimension((int)w, (int)h));
-		loginPanel.setMinimumSize(new Dimension((int)w, (int)h));
+		//loginPanel.setBounds(c+800, 192, (int)w, (int)h);
+		//loginPanel.setPreferredSize(new Dimension((int)w, (int)h));
+		//loginPanel.setMinimumSize(new Dimension((int)w, (int)h));
 		
 		l = treePanel.getLayout();
 		l.layoutContainer(treePanel);
-		h = l.preferredLayoutSize(treePanel).getHeight();
+		h = 1000;
 		w = 192;
-		//treePanel.setBounds(736, 768, (int)w, (int)h);
-		treePanel.setPreferredSize(new Dimension((int)w, (int)h));
-		treePanel.setMinimumSize(new Dimension((int)w, (int)h));
+		//treePanel.setBounds(c+800, 768, (int)w, (int)h);
+		//treePanel.setPreferredSize(new Dimension((int)w, (int)h));
+		//treePanel.setMinimumSize(new Dimension((int)w, (int)h));
+		mainPanel.getLayout().layoutContainer(mainPanel);
+//		mainPanel.setPreferredSize(mainPanel.getLayout().preferredLayoutSize(mainPanel));
+		
+//		int he = 0;
+//		if(this.panelMap!= null){
+//			for(JPanel p : this.panelMap.get(this.currentPanel).values()){
+//				if(p.isVisible())
+//					he += p.getHeight();
+//			}
+//		}
+		//searchPanel.setPreferredSize(new Dimension(576, he));
+		//treePanel.setPreferredSize(new Dimension(192,200));
+		mainPanel.setPreferredSize(new Dimension(1024, 2000));
+		rightUsedPanel.setPreferredSize(new Dimension(192, 850));
+		leftExtraPanel.setPreferredSize(new Dimension(32, mainPanel.getHeight()));
+		rightExtraPanel.setPreferredSize(new Dimension(32, mainPanel.getHeight()));
+		//korgPanel.setPreferredSize(new Dimension(192, ));
+//		this.kundkorg.setPreferredSize(new Dimension(576,576));
+		((SpringLayout)mainPanel.getLayout()).putConstraint(SpringLayout.WEST, leftExtraPanel, (this.getWidth()-1024)/2, SpringLayout.WEST, mainPanel);
+		mainPanel.getLayout().layoutContainer(mainPanel);
+		searchPanel.setPreferredSize(new Dimension(576,Math.max(searchPanel.getPreferredSize().height, treePanel.getHeight())));
 	}
 }
