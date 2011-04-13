@@ -64,6 +64,7 @@ public class Kundkorg extends JPanel implements MouseListener, ComponentListener
 		setup();
 	}
 	
+	
 	private void setup(){
 		w = this.getWidth();
 		h = this.getHeight();
@@ -75,37 +76,62 @@ public class Kundkorg extends JPanel implements MouseListener, ComponentListener
 		deg = deg / n;
 		int i = 1;
 		GeneralPath bounds;
+		GeneralPath bb;
 		
 		Arc2D a = new Arc2D.Double(30,20,515,515,start,deg,Arc2D.OPEN);
-		Arc2D b = new Arc2D.Double(center.getX()-, center.getY(),515,515,start,deg,Arc2D.OPEN);
+		Arc2D b = new Arc2D.Double(center.getX()-77.25, center.getY()-116.46,154.5,154.5,start,deg,Arc2D.OPEN);
 		
 		for (Slice s : slices){
 			bounds = new GeneralPath();
 			bounds.moveTo(center.getX(), center.getY());
 			bounds.append(a, true);
+			bounds.moveTo(center.getX(), center.getY());
+			bounds.lineTo(a.getEndPoint().getX(), a.getEndPoint().getY());
+			bb = new GeneralPath();
+			bb.moveTo(center.getX(), center.getY());
+			bb.append(b, true);
+			bb.moveTo(center.getX(), center.getY());
+			bb.lineTo(b.getEndPoint().getX(), b.getEndPoint().getY());
+			
 			s.setBounds(bounds);
+			s.setDelbounds(bb);
 			a.setAngleStart(start+i*deg);
+			b.setAngleStart(start+i*deg);
 			i++;
 		}
+		invalidate();
 		repaint();
 	}
 	
 	public void paint(Graphics graph){
 		Graphics2D g = (Graphics2D) graph;
-		try {
-			g.drawImage(ImageIO.read(new File("src/kundkorg.png")),0,0,null);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		for (Slice s : slices){
-			Shape b = s.getBounds();
-			switch(s.getBokning().getType()){
-				case FLYG : g.setColor(Color.cyan);break;
-				case HYRBIL : g.setColor(Color.yellow);break;
-				case HOTELL : g.setColor(new Color(255,136,0));break;
-				case EVENT : g.setColor(Color.magenta);break;
+		if(slices.size()==0){
+			try {
+				g.drawImage(ImageIO.read(new File("src/bilder/kundkorg.png")),0,0,null);
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-			g.fill(b);
+		}else{
+			try {
+				g.drawImage(ImageIO.read(new File("src/bilder/kundkorg.png")),0,0,null);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			for (Slice s : slices){
+				switch(s.getBokning().getType()){
+					case FLYG : g.setColor(Color.cyan);break;
+					case HYRBIL : g.setColor(Color.yellow);break;
+					case HOTELL : g.setColor(new Color(255,136,0));break;
+					case EVENT : g.setColor(Color.magenta);break;
+				}
+				g.fill(s.getBounds());
+				g.setColor(Color.darkGray);
+				g.fill(s.getDelbounds());
+				g.setColor(Color.black);
+				g.draw(s.getDelbounds());
+				g.draw(s.getBounds());
+				
+			}
 		}
 		this.paintComponents(graph);
 	}
@@ -117,6 +143,17 @@ public class Kundkorg extends JPanel implements MouseListener, ComponentListener
 		Point2D p = e.getPoint();
 		if(kop.contains(p)){
 			//TODO make kop button do something
+		}else{
+			for(Iterator<Slice> i =slices.iterator();i.hasNext();){
+				Slice s = i.next();
+				if(s.getDelbounds().contains(p)){
+					//TODO add confirmation
+					i.remove();
+				}else if(s.getBounds().contains(p)){
+					//TODO add action to view booking
+				}
+			}
+			this.setup();
 		}
 		
 	}

@@ -29,6 +29,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import boll.Boll;
 
 
 public class MainWindow extends JFrame implements ActionListener, ComponentListener{
