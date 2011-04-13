@@ -9,9 +9,17 @@ public class ImagePanel extends JPanel{
 	BufferedImage img;
 	BufferedImage img2;
 	BufferedImage img3;
+	boolean rePaint = false;
 	
 	public ImagePanel(BufferedImage img){
 		this.img = img;
+	}
+	
+	public ImagePanel(BufferedImage img, boolean lol){
+		this.img = img;
+		this.img2 = img2;
+		this.img3 = img3;
+		this.rePaint = true;
 	}
 	
 	public ImagePanel(BufferedImage img, BufferedImage img2, BufferedImage img3){
@@ -34,6 +42,11 @@ public class ImagePanel extends JPanel{
 	
 	public void paint(Graphics g){
 		g.drawImage(this.img, 0, 0, null);
+		if(rePaint){
+			g.drawImage(this.img, 0, this.img.getHeight(), null);
+			g.drawImage(this.img, 0, this.img.getHeight(), null);
+			g.drawImage(this.img, 0, this.img.getHeight(), null);
+		}
 		this.paintComponents(g);
 	}
 	
