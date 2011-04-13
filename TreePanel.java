@@ -127,6 +127,7 @@ public class TreePanel extends ImagePanel implements ActionListener{
 				this.parent.showOptionPanel(left.getText(), true);
 			}
 		}
+		this.parent.repaint();
 	}
 	
 	public void setButtonDone(String buttonName, boolean done){

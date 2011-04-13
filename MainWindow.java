@@ -1,8 +1,10 @@
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
@@ -78,7 +80,8 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 		
 		
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		this.setSize(1024+30, 768+41); // TODO dimension?
+		//this.setSize(1024+30, 768+41); // TODO dimension?
+		this.setSize(1400, 768+41);
 		this.setVisible(true);
 		
 		((CardLayout)searchPanel.getLayout()).show(searchPanel, flyg);
@@ -214,6 +217,8 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 		mainPanel.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 		
+		//mainPanel.setLayout(null);
+		
 		/**
 		 * Units of 32 pixels - gridwidth = 3 -> height in pixels = 96. (if the dimensions are 1024x768)
 		 */
@@ -222,12 +227,15 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 		c.gridheight = 64;
 		c.gridwidth = 1; // ?
 		try {
-			leftExtraPanel = new ImagePanel(ImageIO.read(new File("src/bilder/design4_01.png")));
+			leftExtraPanel = new ImagePanel(ImageIO.read(new File("src/bilder/design4_01.png")), true);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		leftExtraPanel.setPreferredSize(new Dimension(32*1,768));
+		
+		
+		
 		mainPanel.add(leftExtraPanel,c);
 		
 		c.gridy = 0;
@@ -284,10 +292,10 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 		p.setLayout(new BoxLayout(p, BoxLayout.PAGE_AXIS));
 		p.add(this.user);
 		p.add(Box.createVerticalStrut(10));
-		this.user.getTextField().setColumns(15);
+		this.user.getTextField().setColumns(6);
 		p.add(this.pass);
 		p.add(Box.createVerticalStrut(10));
-		this.pass.getTextField().setColumns(15);
+		this.pass.getTextField().setColumns(6);
 		loginButton.addActionListener(this);
 		p.add(this.loginButton);
 		p.add(Box.createVerticalStrut(500));
@@ -320,16 +328,19 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 		c.gridheight = 64;
 		c.gridwidth = 1;
 		try {
-			rightExtraPanel = new ImagePanel(ImageIO.read(new File("src/bilder/design4_03.png")));
+			rightExtraPanel = new ImagePanel(ImageIO.read(new File("src/bilder/design4_03.png")), true);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		rightExtraPanel.setPreferredSize(new Dimension(32*1,768));
+		
 		mainPanel.add(rightExtraPanel,c);
 		
 		this.mainScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		this.add(this.mainScrollPane);
+		this.updateSizes();
+		repaint();
 	}
 	
 	private void createSearchPanel(){
@@ -499,7 +510,7 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 
 	@Override
 	public void componentResized(ComponentEvent e) {
-		// TODO make it work! + remove error-output
+		/*// TODO make it work! + remove error-output
 		if(e.getSource().equals(this.searchPanel)){
 			//this.adPanel.setPreferredSize(new Dimension(this.adPanel.getWidth(), this.bannerPanel.getHeight()+this.searchPanel.getHeight()));
 			this.adPanel.setPreferredSize(new Dimension(this.adPanel.getWidth(), this.mainPanel.getHeight()-this.bannerPanel.getHeight()));
@@ -511,10 +522,85 @@ public class MainWindow extends JFrame implements ActionListener, ComponentListe
 			rightExtraPanel.setPreferredSize(new Dimension(rightExtraPanel.getWidth(), this.mainPanel.getHeight()));
 			this.mainScrollPane.getVerticalScrollBar().setValue(this.mainScrollPane.getVerticalScrollBar().getMaximum());
 			// TODO Change here to make the scrollpane work differently when panels are shown/hidden.
-		}
+		}*/
 	}
 
 	@Override
 	public void componentShown(ComponentEvent arg0) {
+	}
+	public void paint(Graphics g){
+		this.updateSizes();
+		super.paint(g);
+	}
+	
+	void updateSizes(){
+		System.out.println("Update");
+		double h,w;
+		LayoutManager l;
+		
+		l = bannerPanel.getLayout();
+		l.layoutContainer(bannerPanel);
+		h = l.preferredLayoutSize(bannerPanel).getHeight();
+		w = 960;
+		//bannerPanel.setBounds(32, 0, (int)w, (int)h);
+		bannerPanel.setPreferredSize(new Dimension((int)w, (int)h));
+		bannerPanel.setMinimumSize(new Dimension((int)w, (int)h));
+		
+		l = leftExtraPanel.getLayout();
+		l.layoutContainer(leftExtraPanel);
+		h = l.preferredLayoutSize(leftExtraPanel).getHeight();
+		w = 32;
+		//leftExtraPanel.setBounds(0, 0, (int)w, (int)h);
+		leftExtraPanel.setPreferredSize(new Dimension((int)w, (int)h));
+		leftExtraPanel.setMinimumSize(new Dimension((int)w, (int)h));
+		
+		
+		l = rightExtraPanel.getLayout();
+		l.layoutContainer(rightExtraPanel);
+		h = l.preferredLayoutSize(rightExtraPanel).getHeight();
+		w = 32;
+		//rightExtraPanel.setBounds(992, 0, (int)w, (int)h);
+		rightExtraPanel.setPreferredSize(new Dimension((int)w, (int)h));
+		rightExtraPanel.setMinimumSize(new Dimension((int)w, (int)h));
+		
+		l = adPanel.getLayout();
+		l.layoutContainer(adPanel);
+		h = l.preferredLayoutSize(adPanel).getHeight();
+		w = 192;
+		//adPanel.setBounds(32, 192, (int)w, (int)h);
+		adPanel.setPreferredSize(new Dimension((int)w, (int)h));
+		adPanel.setMinimumSize(new Dimension((int)w, (int)h));
+		
+		l = searchPanel.getLayout();
+		l.layoutContainer(searchPanel);
+		h = l.preferredLayoutSize(searchPanel).getHeight();
+		w = 576;
+		//searchPanel.setBounds(224, 192, (int)w, (int)h);
+		searchPanel.setPreferredSize(new Dimension((int)w, (int)h));
+		searchPanel.setMinimumSize(new Dimension((int)w, (int)h));
+		
+		l = rightUsedPanel.getLayout();
+		l.layoutContainer(rightUsedPanel);
+		h = l.preferredLayoutSize(rightUsedPanel).getHeight();
+		w = 192;
+		//rightUsedPanel.setBounds(736, 192, (int)w, (int)h);
+		rightUsedPanel.setPreferredSize(new Dimension((int)w, (int)h));
+		rightUsedPanel.setMinimumSize(new Dimension((int)w, (int)h));
+		
+		l = loginPanel.getLayout();
+		l.layoutContainer(loginPanel);
+		h = l.preferredLayoutSize(loginPanel).getHeight();
+		w = 192;
+		//loginPanel.setBounds(736, 192, (int)w, (int)h);
+		loginPanel.setPreferredSize(new Dimension((int)w, (int)h));
+		loginPanel.setMinimumSize(new Dimension((int)w, (int)h));
+		
+		l = treePanel.getLayout();
+		l.layoutContainer(treePanel);
+		h = l.preferredLayoutSize(treePanel).getHeight();
+		w = 192;
+		//treePanel.setBounds(736, 768, (int)w, (int)h);
+		treePanel.setPreferredSize(new Dimension((int)w, (int)h));
+		treePanel.setMinimumSize(new Dimension((int)w, (int)h));
 	}
 }
